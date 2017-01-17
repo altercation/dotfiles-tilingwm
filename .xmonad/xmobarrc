@@ -1,0 +1,78 @@
+--
+--
+-- Solarized.red     is #DC322F
+-- Solarized.magenta is #D33682
+-- Solarized.violet  is #6C71C4
+-- Solarized.blue    is #268BD2
+-- Solarized.cyan    is #2AA198
+-- Solarized.green   is #859900
+--       , position           = TopW L 100
+
+-- base03  = "#002b36"
+-- base02  = "#073642"
+-- base01  = "#586e75"
+-- base00  = "#657b83"
+-- base0   = "#839496"
+-- base1   = "#93a1a1"
+-- base2   = "#eee8d5"
+-- base3   = "#fdf6e3"
+-- yellow  = "#b58900"
+-- orange  = "#cb4b16"
+-- red     = "#dc322f"
+-- magenta = "#d33682"
+-- violet  = "#6c71c4"
+-- blue    = "#268bd2"
+-- cyan    = "#2aa198"
+-- green   = "#859900"
+
+Config { font               = "xft:xos4 Terminus:size=12:antialias=true:hinting=true"
+       , allDesktops        = True
+       -- bgColor is Solarized:base03
+       -- fgColor is Solarized:base0
+       --, bgColor            = "#002B36"
+       , bgColor            = "#000000"
+       , fgColor            = "#586e75"
+       --, fgColor            = "#073642"
+       , alpha = 100
+       , overrideRedirect = True
+       --, additionalFonts    = ["xft:Raleway:size=12:antialias=true:hinting=true", "xft:Inconsolata for Powerline:size=12:antialias=true:hinting=true"]
+       , commands           = [ Run Weather "KNYC" ["-t"
+                                                   , "<station>: <tempC>C"
+                                                   , "-L", "10"
+                                                   , "-H", "25"
+                                                   , "--low", "#268BD2"
+                                                   , "--normal", "#839496"
+                                                   , "--high", "#DC322F"] 36000
+                              , Run MultiCpu ["-t","CPU: <total0>% <total1>%"
+                                             , "-L", "40"
+                                             , "-H", "60"
+                                             , "-l", "#268BD2"
+                                             , "-h", "#DC322F" ] 10
+                              , Run CpuFreq ["-t", " "
+                                            , "-L", "40"
+                                            , "-H", "60"
+                                            , "-l", "#268BD2"
+                                            , "-h", "#DC322F" ] 10
+                              , Run Volume "default" "Master" [] 1
+                              , Run Battery ["-t", "Batt:<acstatus>"
+                                            , "-L", "20"
+                                            , "-H", "85"
+                                            , "-l", "darkred"
+                                            , "-n", "darkorange"
+                                            , "-h", "darkgreen"
+                                            , "--" -- battery specific options
+                                            -- discharging status
+                                            , "-o"	, "<left>% (<timeleft>)"
+                                            -- AC "on" status
+                                            , "-O"	, "<fc=#dAA520>Charging</fc>"
+                                            -- charged status
+                                            , "-i"	, "<fc=#006000>Charged</fc>"
+                                            ] 10
+                              , Run Memory ["-t", "Mem:<usedratio>%"] 10
+                              , Run Date "%a %_d %b %Y <fc=#2AA198>%H:%M:%S</fc>" "date" 10
+                              , Run StdinReader]
+       , sepChar            = "%"
+       , alignSep           = "}{"
+       , template           = "%StdinReader% }{ %default:Master% %multicpu% %cpufreq% %memory% %battery% %date% %KNYC%           "
+       }
+
