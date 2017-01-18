@@ -1,0 +1,24 @@
+# ----------------------------------------------------------------------
+# resolution & display 
+
+xrandr --setprovideroutputsource modesetting NVIDIA-0
+xrandr --dpi 96
+
+# Calling 'displayctl' without arguments is the same as calling it with
+# 'auto'. This will scan the current set of connected displays, check to
+# see if I have a preferred configuration via automatically recorded
+# connection data, and if so will apply either that value or a default
+# based on state of connected external displays.
+
+$HOME/bin/wm/displayctl
+
+
+# ----------------------------------------------------------------------
+# Currently using tab as both tab key and a modifier. Works well though
+# I need to switch away from using Xmodmap. Use xkb (via localectl) seems
+# like a better idea.
+
+[[ -f ~/.Xmodmap ]] && xmodmap ~/.Xmodmap
+# depends on .Xmodmap being set correctly (TODO: switch to xkb)
+xcape -e "Hyper_L=Tab;Hyper_R=ISO_Left_Tab"
+
