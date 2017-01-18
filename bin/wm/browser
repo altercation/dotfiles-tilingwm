@@ -1,0 +1,27 @@
+#!/usr/bin/bash
+
+# gnome should use the first column, numeric index 0-n
+# (the last named column on dynamic workspace creation
+# in gnome ends up blank or set to N/A polling w/wmctrl)
+#
+# xmonad should use the named last column
+#
+# i3 should use?
+
+
+BROWSER="google-chrome-beta"
+CURRENTWS=$(wmctrl -d | grep '*' | rev | cut -d " " -f 1 | rev | tr '[:upper:]' '[:lower:]')
+INCOGNITO=""
+CONFIGDIR=${XDG_CONFIG_HOME:-${HOME}/.config}
+SUFFIX=""
+
+case $CURRENTWS in
+	wrk|work|av|null) ;; # list of workspaces that get their own browser profiles
+        void) INCOGNITO=" --incognito " ;; # workspaces that launch incognito mode browsers by default
+        *) CURRENTWS="" ;; # everything else uses the default profile
+esac
+
+[[ -n $CURRENTWS ]] && SUFFIX="-$CURRENTWS"
+
+eval $BROWSER $INCOGNITO --user-data-dir=${CONFIGDIR}/${BROWSER}${SUFFIX} $*
+
