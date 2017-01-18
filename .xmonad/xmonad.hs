@@ -330,7 +330,7 @@ projects =
 myTerminal          = "terminator"
 myTerminalClass     = "Terminator"
 myAltTerminal       = "cool-retro-term"
-myBrowser           = "$HOME/bin/browser" -- chrome with WS profile dirs
+myBrowser           = "$HOME/bin/wm/browser" -- chrome with WS profile dirs
 myBrowserClass      = "Google-chrome-beta"
 myStatusBar         = "xmobar -x0 $HOME/.xmonad/xmobarrc"
 myLauncher          = "dmenu_run"
@@ -422,8 +422,8 @@ cyan    = "#2aa198"
 green       = "#859900"
 
 -- sizes
-gap         = 9
-topbar      = 5
+gap         = 10
+topbar      = 10
 border      = 0
 prompt      = 20
 status      = 20
@@ -1388,7 +1388,7 @@ myKeys conf = let
     [ ("M-q"                    , addName "Restart XMonad"              $ spawn "xmonad --restart")
     , ("M-C-q"                  , addName "Rebuild & restart XMonad"    $ spawn "xmonad --recompile && xmonad --restart")
     , ("M-S-q"                  , addName "Quit XMonad"                 $ confirmPrompt hotPromptTheme "Quit XMonad" $ io (exitWith ExitSuccess))
-    --, ("M4-l"                 , addName "Lock screen"                 $ spawn "$HOME/bin/lockscreen")
+    --, ("M4-l"                 , addName "Lock screen"                 $ spawn "$HOME/bin/wm/lockscreen")
     , ("M4-l"                   , addName "Lock screen"                 $ spawn "xset s activate")
     ] ^++^
 
@@ -1400,13 +1400,9 @@ myKeys conf = let
     ,("<XF86PowerOff>"          , addName "System power off"            $ spawn "notify-send system off")
     ,("S-<XF86PowerOff>"        , addName "System reboot"               $ spawn "notify-send system reboot")
     ,("<XF86ScreenSaver>"       , addName "Lock screen"                 $ spawn "notify-send displays lock")
-    --,("<XF86Display>"           , addName "Cycle display mode"          $ spawn "$HOME/bin/displayctl auto")
-    ,("S-<XF86Display>"         , addName "Span display mode"           $ spawn "$HOME/bin/displayctl span")
-    ,("C-<XF86Display>"         , addName "Span display mode"           $ spawn "$HOME/bin/displayctl toggle")
-    ,("M-<XF86Display>"         , addName "Mirror display mode"         $ spawn "$HOME/bin/displayctl auto")
-    ,("S-C-<XF86Display>"       , addName "Mirror display mode"         $ spawn "$HOME/bin/autodisplay unlock && $HOME/bin/autodisplay auto")
-    ,("M-C-<XF86Display>"       , addName "Mirror display mode"         $ spawn "$HOME/bin/autodisplay unlock && $HOME/bin/autodisplay auto")
-    ,("M-S-<XF86Display>"       , addName "Mirror display mode"         $ spawn "$HOME/bin/autodisplay unlock && $HOME/bin/autodisplay auto")
+    ,("S-<XF86Display>"         , addName "Span display mode"           $ spawn "$HOME/bin/wm/displayctl span")
+    ,("C-<XF86Display>"         , addName "Span display mode"           $ spawn "$HOME/bin/wm/displayctl toggle")
+    ,("M-<XF86Display>"         , addName "Mirror display mode"         $ spawn "$HOME/bin/wm/displayctl auto")
     ,("<XF86Launch1>"           , addName "Bluetooth toggle"            $ spawn "notify-send wireless bluetooth toggle")
     ,("<XF86TouchpadOn>"        , addName "Trackpad toggle"             $ spawn "notify-send trackpad toggle")
     ,("<Print>"                 , addName "Screendraw start/stop"       $ spawn "notify-send screendraw")
@@ -1466,11 +1462,11 @@ myMouseBindings (XConfig {XMonad.modMask = myModMask}) = M.fromList $
 
 myStartupHook = do
     -- init-tilingwm sets up all major "desktop environment" like components
-    spawnOnce "$HOME/bin/init-tilingwm"
+    spawnOnce "$HOME/bin/wm/init-tilingwm"
     -- init-tray kills and restarts stalone tray, hence just "spawn" so it
     -- runs on restart and will suffice to reposition tray on display changes
     -- TODO: evaluate moving to a "restart tray only" option on display change
-    spawn     "$HOME/bin/init-tray"
+    spawn     "$HOME/bin/wm/init-tray"
     setDefaultCursor xC_left_ptr
 
 quitXmonad :: X ()
