@@ -151,7 +151,8 @@ import XMonad.Actions.MessageFeedback       -- pseudo conditional key bindings
 import XMonad.Actions.Navigation2D
 import XMonad.Actions.Promote               -- promote window to master
 import XMonad.Actions.SinkAll
-import XMonad.Actions.Volume
+import XMonad.Actions.SpawnOn
+--import XMonad.Actions.Volume
 import XMonad.Actions.WindowGo
 import XMonad.Actions.WithAll               -- action all the things
 
@@ -293,31 +294,40 @@ myConfig p = def
 -- Workspaces                                                           {{{
 ---------------------------------------------------------------------------
 
+wsGen   = "GEN"
+wsWrk   = "WRK"
+wsCom   = "COM"
+wsSys   = "SYS"
+wsAv    = "AV"
+wsRw    = "RW"
+wsRad   = "RAD"
+wsTmp   = "TMP"
+
 -- myWorkspaces = map show [1..9]
-myWorkspaces = ["GEN", "WRK", "COM", "SYS", "FLO", "AV", "RW", "TMP"]
+myWorkspaces = [wsGen, wsWrk, wsCom, wsSys, wsAv, wsRw, wsTmp]
 
 projects :: [Project]
 projects =
 
-    [ Project   { projectName       = "GEN"
+    [ Project   { projectName       = wsGen
                 , projectDirectory  = "~/"
                 , projectStartHook  = Nothing
                 }
 
-    , Project   { projectName       = "SYS"
+    , Project   { projectName       = wsSys
                 , projectDirectory  = "~/"
-                , projectStartHook  = Just $ do spawn myTerminal
-                                                spawn myTerminal
-                                                spawn myTerminal
+                , projectStartHook  = Just $ do spawnOn wsSys myTerminal
+                                                spawnOn wsSys myTerminal
+                                                spawnOn wsSys myTerminal
                 }
 
-    , Project   { projectName       = "WRK"
+    , Project   { projectName       = wsWrk
                 , projectDirectory  = "~/wrk"
-                , projectStartHook  = Just $ do spawn myTerminal
-                                                spawn myBrowser
+                , projectStartHook  = Just $ do spawnOn wsWrk myTerminal
+                                                spawnOn wsWrk myBrowser
                 }
 
-    , Project   { projectName       = "RAD"
+    , Project   { projectName       = wsRad
                 , projectDirectory  = "~/"
                 , projectStartHook  = Just $ do spawn myBrowser
                 }
@@ -708,7 +718,6 @@ myLayoutHook = showWorkspaceName
               $ addTopBar
               $ addTabs shrinkText myTabTheme
               $ subLayout [] (Simplest ||| (mySpacing $ Accordion))
-              -- $ subLayout [] Simplest
               $ ifWider smallMonResWidth wideLayouts standardLayouts
               where
                   wideLayouts = myGaps $ mySpacing
@@ -1356,6 +1365,7 @@ myKeys conf = let
 --                                                                                    , (P.sendKey controlMask xK_c)
 --                                                                                    , unsafeWithSelection "notify-send"])
       ("M4-a"                   , addName "Notify w current X selection" $  unsafeWithSelection "notify-send")
+    , ("M4-u"                   , addName "Copy current browser URL"     $  spawn "$HOME/bin/wm/copyurl")
     ] ^++^
 
     -----------------------------------------------------------------------
@@ -1370,9 +1380,9 @@ myKeys conf = let
     , ("M-\\"                   , addName "Browser"                     $ spawn myBrowser)
     , ("C-<Return>"             , addName "Terminal"                    $ spawn myTerminal)
     , ("C-\\"                   , addName "Browser"                     $ spawn myBrowser)
-    , ("M-g"                    , addName "NSP Hangouts"                $ bindOn WS [("WRK", namedScratchpadAction scratchpads "hangoutsWork"),
+    , ("M-g"                    , addName "NSP Hangouts"                $ bindOn WS [(wsWrk, namedScratchpadAction scratchpads "hangoutsWork"),
                                                                                      ("", namedScratchpadAction scratchpads "hangoutsPersonal")])
-    , ("M-t"                    , addName "NSP Trello"                  $ bindOn WS [("WRK", namedScratchpadAction scratchpads "trelloWork"),
+    , ("M-t"                    , addName "NSP Trello"                  $ bindOn WS [(wsWrk, namedScratchpadAction scratchpads "trelloWork"),
                                                                                      ("", namedScratchpadAction scratchpads "trello")])
 --    , ("M4-v"                   , addName "NSP AV Music"                $ bindOn WS [("av", namedScratchpadAction scratchpads "googleMusic"),
 --                                                                                     ("", return ())])
@@ -1412,11 +1422,11 @@ myKeys conf = let
     ] ^++^
 
     subKeys "Media Controls"
-    [("<XF86AudioRaiseVolume>"  , addName "Volume Up"                   $ raiseVolume 5 >> return ())
-    ,("<XF86AudioLowerVolume>"  , addName "Volume Down"                 $ lowerVolume 5 >> return ())
-    ,("<XF86AudioMute>"         , addName "Volume Mute"                 $ toggleMute >> return ())
-    ,("M4-m"         , addName "Volume Mute"                 $ toggleMute >> return ())
-    ,("<XF86AudioMicMute>"      , addName "Mic Mute"                    $ spawn "notify-send mic mute")
+    [--("<XF86AudioRaiseVolume>"  , addName "Volume Up"                   $ raiseVolume 5 >> return ())
+    --,("<XF86AudioLowerVolume>"  , addName "Volume Down"                 $ lowerVolume 5 >> return ())
+    --,("<XF86AudioMute>"         , addName "Volume Mute"                 $ toggleMute >> return ())
+    --,("M4-m"         , addName "Volume Mute"                 $ toggleMute >> return ())
+    ("<XF86AudioMicMute>"      , addName "Mic Mute"                    $ spawn "notify-send mic mute")
     ]
     
 
@@ -1498,7 +1508,7 @@ myLogHook h = do
     dynamicLogWithPP $ def
 
         { ppCurrent             = xmobarColor active "" . wrap "[" "]"
-        , ppTitle               = xmobarColor active "" . shorten 100
+        , ppTitle               = xmobarColor active "" . shorten 80
         , ppVisible             = wrap "(" ")"
         , ppUrgent              = xmobarColor red "" . wrap " " " "
         , ppHidden              = check
@@ -1519,13 +1529,13 @@ myFadeHook = composeAll
     , (className =? "Taffybar-linux-x86_64") --> opacity 0.5
     , (className =? "taffybar-linux-x86_64") --> opacity 0.5
     , (resource =? "taffybar-linux-x86_64") --> opacity 0.5
+    , (className =? "Dunst") --> opacity 0.8
     , isUnfocused --> opacity 0.85
-    --, isFloating  --> opacity 0.75
     , (className =? "Terminator") <&&> (isUnfocused) --> opacity 0.9
     , fmap ("Google" `isPrefixOf`) className --> opaque
+    , isDialog --> opaque 
     --, isUnfocused --> opacity 0.55
     --, isFloating  --> opacity 0.75
-    , isDialog --> opaque 
     ]
 
 ------------------------------------------------------------------------}}}
@@ -1544,6 +1554,7 @@ myFadeHook = composeAll
 myManageHook :: ManageHook
 myManageHook =
         manageDocks
+    <+> manageSpawn
     <+> namedScratchpadManageHook scratchpads
     <+> fullscreenManageHook
     <+> composeOne
