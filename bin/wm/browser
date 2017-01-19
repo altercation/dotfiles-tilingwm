@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/sh
 
 # gnome should use the first column, numeric index 0-n
 # (the last named column on dynamic workspace creation
@@ -8,20 +8,62 @@
 #
 # i3 should use?
 
-
+WM="$(wmctrl -m | head -n1 | cut -d " " -f2)"
 BROWSER="google-chrome-beta"
 CURRENTWS=$(wmctrl -d | grep '*' | rev | cut -d " " -f 1 | rev | tr '[:upper:]' '[:lower:]')
 INCOGNITO=""
 CONFIGDIR=${XDG_CONFIG_HOME:-${HOME}/.config}
 SUFFIX=""
 
+# In the case statement below, each statement entry does three possible things:
+#
+# 1) Assigns a debug PORT so that a separate url-actions script can send
+#    commands to it. If no port is assigned, no debug commands may be sent.
+#    Note that since each "cluster" of workspace names (or numbers) will
+#    have an independent browser instance running, the port must be unique.
+#    This introduces some complexity in that the url-actions script must
+#    identify the current workspace in order to send commands to the browser.
+#    Each case statement can either leave the CURRENTWS value as is or
+#    optionally rename it. The difference being that if the case statement
+#    is something like 3|art|music|code) and the CURRENTWS value is not changed
+#    set in that case statement, then workspace #2 or workspaces with the
+#    name of "art" or "music" or "code" would each get entirely different
+#    browser profiles (and this may be desirable). Alternately, if you had a
+#    case statement like 2|wkr|work) and you want them all to have the same
+#    browser profile, then assign the CURRENTWS variable to something common
+#    in that statement, such as:
+#
+#        2|wrk|work) CURRENTWS="wrk" ;;
+#
+# 2) Accepts the current value of "CURRENTWS" or assigns an empty value to it.
+#    If the value is empty, then the browser runs as a "default profile", which
+#    is the normal mode the browser would run in (and standard profile
+#    directory). If CURRENTWS retains its initially assigned value (the name
+#    or number of the workspace) then the browser instance will run in a
+#    unique profile directory. This allows entirely separate configuration
+#    for browser profiles, etc.
+#
+# 3) Sets incognito mode via a flag variable.
+
 case $CURRENTWS in
-	wrk|work|av|null) ;; # list of workspaces that get their own browser profiles
-        void) INCOGNITO=" --incognito " ;; # workspaces that launch incognito mode browsers by default
-        *) CURRENTWS="" ;; # everything else uses the default profile
+
+	# list of workspaces that get their own browser profiles
+	# (work browser, assigned own debug port)
+	2|wrk|work) CURRENTWS=wrk; PORT=9223; ;;
+
+	# list of workspaces that get their own browser profiles
+	6|av|null) ;;
+
+	# workspaces that launch incognito mode browsers by default
+        7|void|anon) INCOGNITO=" --incognito "; ;;
+
+	# every other non-listed workspace uses the default profile
+        *) CURRENTWS=""; PORT=9222; ;;
 esac
 
-[[ -n $CURRENTWS ]] && SUFFIX="-$CURRENTWS"
+[ -z ${PORT:-} ] || REMOTE="--remote-debugging-port=$PORT"
 
-eval $BROWSER $INCOGNITO --user-data-dir=${CONFIGDIR}/${BROWSER}${SUFFIX} $*
+[ -z $CURRENTWS ] || SUFFIX="-$CURRENTWS"
+
+eval $BROWSER $INCOGNITO --user-data-dir=${CONFIGDIR}/${BROWSER}${SUFFIX} ${REMOTE:-} $*
 
