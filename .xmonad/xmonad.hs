@@ -198,6 +198,7 @@ import XMonad.Layout.StackTile
 import XMonad.Layout.SubLayouts             -- Layouts inside windows. Excellent.
 import XMonad.Layout.ThreeColumns
 import XMonad.Layout.ToggleLayouts          -- Full window at any time
+import XMonad.Layout.TrackFloating
 import XMonad.Layout.TwoPane
 import XMonad.Layout.WindowNavigation
 
@@ -279,10 +280,10 @@ myConfig p = def
         , focusFollowsMouse  = myFocusFollowsMouse
         , normalBorderColor  = myNormalBorderColor
         , focusedBorderColor = myFocusedBorderColor
+        , manageHook         = myManageHook
         , handleEventHook    = myHandleEventHook
         , layoutHook         = myLayoutHook
         , logHook            = myLogHook p
-        , manageHook         = myManageHook
         , modMask            = myModMask
         , mouseBindings      = myMouseBindings
         , startupHook        = myStartupHook
@@ -337,8 +338,9 @@ projects =
 -- Applications                                                         {{{
 ---------------------------------------------------------------------------
 
-myTerminal          = "terminator"
-myTerminalClass     = "Terminator"
+--myTerminal          = "terminator"
+--myTerminalClass     = "Terminator"
+myTerminal          = "urxvt"
 myAltTerminal       = "cool-retro-term"
 myBrowser           = "$HOME/bin/wm/browser" -- chrome with WS profile dirs
 myBrowserClass      = "Google-chrome-beta"
@@ -394,13 +396,13 @@ plexInfix           = "Plex"
 plexResource        = "crx_fpniocchabmgenibceglhnfeimmdhdfm"
 isPlex              = (resource =? plexResource)
 
-isConsole           = (className =? myTerminalClass)
-                    <&&> (stringProperty "WM_WINDOW_ROLE" =? "Scratchpad")
-myConsole           = "terminator -T console -p console --role=Scratchpad"
+--isConsole           = (className =? myTerminalClass)
+--                    <&&> (stringProperty "WM_WINDOW_ROLE" =? "Scratchpad")
+--myConsole           = "terminator -T console -p console --role=Scratchpad"
 
 scratchpads =
-    [   (NS "console"  myConsole isConsole nonFloating)
-    ,   (NS "hangoutsPersonal"  hangoutsCommand isPersonalHangouts defaultFloating)
+    --[   (NS "console"  myConsole isConsole nonFloating)
+    [   (NS "hangoutsPersonal"  hangoutsCommand isPersonalHangouts defaultFloating)
     ,   (NS "hangoutsWork"  hangoutsCommand isWorkHangouts defaultFloating)
     ,   (NS "trello"  trelloCommand isTrello nonFloating)
     ,   (NS "trelloWork"  trelloWorkCommand isTrelloWork nonFloating)
@@ -545,6 +547,7 @@ myLayoutHook = showWorkspaceName
   where
 
 --    testTall = Tall 1 (1/50) (2/3)
+--    myTall = subLayout [] Simplest $ trackFloating (Tall 1 (1/20) (1/2))
 
     floatWorkSpace      = simplestFloat
     fullBarToggle       = mkToggle (single FULLBAR)
@@ -1509,7 +1512,8 @@ myLogHook h = do
     --dynamicLogWithPP $ defaultPP
     dynamicLogWithPP $ def
 
-        { ppCurrent             = xmobarColor active "" . wrap "[" "]"
+        -- { ppCurrent             = xmobarColor active "" . wrap "[" "]"
+        { ppCurrent             = wrap "<fc=#FFFFFF,#FF0000>" "</fc>"
         , ppTitle               = xmobarColor active "" . shorten 80
         , ppVisible             = wrap "(" ")"
         , ppUrgent              = xmobarColor red "" . wrap " " " "
@@ -1551,31 +1555,31 @@ myFadeHook = composeAll
 
 myManageHook :: ManageHook
 myManageHook =
-        manageSpawn
+        manageSpecific
     <+> manageDocks
     <+> namedScratchpadManageHook scratchpads
     <+> fullscreenManageHook
-    <+> composeOne
-    [ resource =? "desktop_window" -?> doIgnore
-    , resource =? "stalonetray"    -?> doIgnore
-    , resource =? trelloResource -?> doFullFloat
-    , resource =? trelloWorkResource -?> doFullFloat
-    , resource =? googleMusicResource -?> doFullFloat
-    , resource =? plexResource -?> doCenterFloat
-    , resource =? hangoutsResource -?> insertPosition End Newer
-    , transience
-    , isBrowserDialog -?> forceCenterFloat
-    , isConsole -?> forceCenterFloat
-    , isRole =? gtkFile  -?> forceCenterFloat
-    , isDialog -?> doCenterFloat
-    , isRole =? "pop-up" -?> doCenterFloat
-    , isInProperty "_NET_WM_WINDOW_TYPE"
-                   "_NET_WM_WINDOW_TYPE_SPLASH" -?> doCenterFloat
-    , resource =? "console" -?> tileBelowNoFocus
-    , isFullscreen -?> doFullFloat
-    , pure True -?> tileBelow
-    ]
+    <+> manageSpawn
     where
+        manageSpecific = composeOne
+            [ resource =? "desktop_window" -?> doIgnore
+            , resource =? "stalonetray"    -?> doIgnore
+            , resource =? trelloResource -?> doFullFloat
+            , resource =? trelloWorkResource -?> doFullFloat
+            , resource =? googleMusicResource -?> doFullFloat
+            , resource =? plexResource -?> doCenterFloat
+            , resource =? hangoutsResource -?> insertPosition End Newer
+            , transience
+            , isBrowserDialog -?> forceCenterFloat
+            --, isConsole -?> forceCenterFloat
+            , isRole =? gtkFile  -?> forceCenterFloat
+            , isDialog -?> doCenterFloat
+            , isRole =? "pop-up" -?> doCenterFloat
+            , isInProperty "_NET_WM_WINDOW_TYPE"
+                           "_NET_WM_WINDOW_TYPE_SPLASH" -?> doCenterFloat
+            , resource =? "console" -?> tileBelowNoFocus
+            , isFullscreen -?> doFullFloat
+            , pure True -?> tileBelow ]
         isBrowserDialog = isDialog <&&> className =? myBrowserClass
         gtkFile = "GtkFileChooserDialog"
         isRole = stringProperty "WM_WINDOW_ROLE"
