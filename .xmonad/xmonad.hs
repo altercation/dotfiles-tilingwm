@@ -343,7 +343,8 @@ myAltTerminal       = "cool-retro-term"
 myBrowser           = "$HOME/bin/wm/browser" -- chrome with WS profile dirs
 myBrowserClass      = "Google-chrome-beta"
 myStatusBar         = "xmobar -x0 $HOME/.xmonad/xmobarrc"
-myLauncher          = "dmenu_run"
+--myLauncher          = "dmenu_run"
+myLauncher          = "rofi -matching fuzzy -show run"
 
 
 -- I'm using a custom browser launching script (see myBrowser above) that
@@ -1365,7 +1366,8 @@ myKeys conf = let
 --                                                                                    , (P.sendKey controlMask xK_c)
 --                                                                                    , unsafeWithSelection "notify-send"])
       ("M4-a"                   , addName "Notify w current X selection" $  unsafeWithSelection "notify-send")
-    , ("M4-u"                   , addName "Copy current browser URL"     $  spawn "$HOME/bin/wm/copyurl")
+    , ("M4-u"                   , addName "Copy current browser URL"     $  spawn "$HOME/bin/wm/url-actions")
+    , ("M4-d"                   , addName "Display menu"                 $  spawn "$HOME/bin/wm/displayctl menu")
     ] ^++^
 
     -----------------------------------------------------------------------
@@ -1526,10 +1528,6 @@ myLogHook h = do
 
 myFadeHook = composeAll
     [ opaque -- default to opaque
-    , (className =? "Taffybar-linux-x86_64") --> opacity 0.5
-    , (className =? "taffybar-linux-x86_64") --> opacity 0.5
-    , (resource =? "taffybar-linux-x86_64") --> opacity 0.5
-    , (className =? "Dunst") --> opacity 0.8
     , isUnfocused --> opacity 0.85
     , (className =? "Terminator") <&&> (isUnfocused) --> opacity 0.9
     , fmap ("Google" `isPrefixOf`) className --> opaque
@@ -1553,8 +1551,8 @@ myFadeHook = composeAll
 
 myManageHook :: ManageHook
 myManageHook =
-        manageDocks
-    <+> manageSpawn
+        manageSpawn
+    <+> manageDocks
     <+> namedScratchpadManageHook scratchpads
     <+> fullscreenManageHook
     <+> composeOne
