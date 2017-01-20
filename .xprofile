@@ -1,3 +1,5 @@
+xrdb -DSOLARIZED_DARK -load ~/.Xresources
+
 # ----------------------------------------------------------------------
 # resolution & display 
 
@@ -22,3 +24,16 @@ $HOME/bin/wm/displayctl
 # depends on .Xmodmap being set correctly (TODO: switch to xkb)
 xcape -e "Hyper_L=Tab;Hyper_R=ISO_Left_Tab"
 
+
+# ----------------------------------------------------------------------
+# run xsettingsd in lieu of gnome-settings-daemon
+# this helps pass certain values to gtk programs (fonts, for example)
+# cf https://github.com/derat/xsettingsd/wiki/Installation
+# TODO: wiki mentions using .xsession .. should i be using that instead
+# of .xprofile? just move into my init file? make a new .shell like
+# config file or folder?
+
+/usr/bin/xsettingsd &
+
+
+export TERMINAL=urxvt

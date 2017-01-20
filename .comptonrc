@@ -54,7 +54,7 @@ backend = "glx"   # Backend to use: "xrender" or "glx". GLX backend is typically
         # much faster but depends on a sane driver.
 mark-wmwin-focused = true;  # Try to detect WM windows and mark them as active.
 mark-ovredir-focused = true;  # Mark all non-WM but override-redirect windows active (e.g. menus).
-use-ewmh-active-win = false;  # Use EWMH _NET_WM_ACTIVE_WINDOW to determine which window is focused
+use-ewmh-active-win = true;  # Use EWMH _NET_WM_ACTIVE_WINDOW to determine which window is focused
         # instead of using FocusIn/Out events. Usually more reliable but
         # depends on a EWMH-compliant WM.
 detect-rounded-corners = true;  # Detect rounded corners and treat them as rectangular when --shadow-ignore- shaped is on.

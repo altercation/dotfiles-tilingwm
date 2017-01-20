@@ -54,6 +54,7 @@ main () {
     CONNECTED_ACTIVE_OUTPUTS="$(echo $(echo "$XRANDRV" | awk '/ connected.*[[:digit:]]/ {print $1}') | sed 's/ \+/|/g')"
     DISCONNECTED_ACTIVE_OUTPUTS="$(echo $(echo "$XRANDRV" | awk '/disconnected.*[[:digit:]]/ {print $1}') | sed 's/ \+/|/g')"
     case ${1:-auto} in
+        menu)   menu ;;
         in*)    internal ;;
         ex*)    external ;;
         span)   span     ;;
@@ -61,6 +62,20 @@ main () {
         toggle) toggle   ;;
         auto)   auto     ;;
         *)      usage ;;
+    esac
+}
+
+
+menu () {
+    items="auto internal external span mirror"
+    result=$((for item in $items; do echo $item; done) | ~/bin/wm/menu)
+    case ${result:-} in
+        in*)    internal ;;
+        ex*)    external ;;
+        span)   span     ;;
+        mirror) mirror   ;;
+        auto)   auto     ;;
+        *)      :        ;;
     esac
 }
 
@@ -98,34 +113,28 @@ notifications () {
 }
 
 execute () {
-    echo A
-    # the restart of dunst is probably messing with our flock on the lockfile
+    #TODO: the restart of dunst is probably messing with our flock on the lockfile
     #notifications kill
-    echo B
 
     # execute the output change
     eval $CMD
-    #[ ${1:-} = "span" ] && sleep 1
-    #sleep 1
+    xrandr -q > tmp/dc_before_$1
+    [ ${1:-} = "span" ] && sleep 3
+    [ ${1:-} = "mirror" ] && sleep 4
+    xrandr -q > tmp/dc_after_$1
     # restart xmonad only if not in screensaver
     # (if in screensaver, the lockscreen script handles restart)
-    xsaver_status="$(xscreensaver-command -time)"
+    xsaver_status="$(xscreensaver-command -time 2>&1)" || :
     [ "${xsaver_status#* locked}" = "$xsaver_status" ] && xmonad --restart
-    feh --bg-fill /home/ethan/tmp/lowpoly6.jpg &
+    feh --bg-fill /home/ethan/tmp/lowpoly6.jpg
     # remember what our preferred config is for this output combination
     save_fingerprint ${1:-}
 
-    echo C
-    # the restart of dunst is probably messing with our flock on the lockfile
+    #TODO: the restart of dunst is probably messing with our flock on the lockfile
     #notifications init
-    echo D
-    sleep 1
-    echo E
     
-    sleep 2
     # journal and notification
     log_notify "${1:-} ${LOGIC:-}"
-    echo F
 }
 
 save_fingerprint () {
@@ -251,7 +260,7 @@ internal () {
     if [ -z "$DISCONNECTED_ACTIVE_OUTPUTS" ] && [ "$CONNECTED_ACTIVE_OUTPUTS" = "$INTERNAL_OUTPUT" ]
     then
         log_notify "Internal display already active"
-        exit
+        return
     fi
     CMD="$CMDBASE"
     for OUTPUT in $ALL_OUTPUTS
@@ -299,6 +308,7 @@ span () {
             #'$CONNECTED_OUTPUTS') CMD="$CMD --output $OUTPUT --scale 1x1 --auto --right-of $NEIGHBOR"; NEIGHBOR=$OUTPUT ;;
             #*) CMD="$CMD --output $OUTPUT --off" ;;
     log_notify "Switch to spanned displays"
+    #CMD="xrandr --output DP-6 --off --output DP-5 --off --output DP-4 --primary --mode 1920x1080 --pos 0x0 --rotate normal --output DP-3 --mode 3440x1440 --pos 1920x0 --rotate normal --output DP-2 --off --output DP-1 --off --output DP-0 --off"
     execute "$FUNCNAME"
     }
 
