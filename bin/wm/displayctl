@@ -61,6 +61,7 @@ main () {
         mirror) mirror   ;;
         toggle) toggle   ;;
         auto)   auto     ;;
+        backlight|back|bl|bright) echo "HERE" >> /home/ethan/tmp/test.log; backlight ${2:-} ;;
         *)      usage ;;
     esac
 }
@@ -68,7 +69,7 @@ main () {
 
 menu () {
     items="auto internal external span mirror"
-    result=$((for item in $items; do echo $item; done) | ~/bin/wm/menu)
+    result=$((for item in $items; do echo $item; done) | launch-menu "Display Mode")
     case ${result:-} in
         in*)    internal ;;
         ex*)    external ;;
@@ -113,6 +114,7 @@ notifications () {
 }
 
 execute () {
+
     #TODO: the restart of dunst is probably messing with our flock on the lockfile
     #notifications kill
 
@@ -122,11 +124,19 @@ execute () {
     [ ${1:-} = "span" ] && sleep 3
     [ ${1:-} = "mirror" ] && sleep 4
     xrandr -q > tmp/dc_after_$1
-    # restart xmonad only if not in screensaver
-    # (if in screensaver, the lockscreen script handles restart)
+
+    # get xscreensaver status and eat any error with a null function (otherwise script errors out)
     xsaver_status="$(xscreensaver-command -time 2>&1)" || :
-    [ "${xsaver_status#* locked}" = "$xsaver_status" ] && xmonad --restart
+
+    # if not locked, restart xmonad, largely to deal with xmobar & tray pos,
+    # otherwise send an Esc key event to "awaken" the screensaver on external
+    # screens (for some reason xscreensaver will stay dark in some savers when
+    # just switching displays unless a key event occurs)
+    [ "${xsaver_status#* locked}" = "$xsaver_status" ] && xmonad --restart || xdotool key Escape
+
+    # reset wallpaper
     feh --bg-fill /home/ethan/tmp/lowpoly6.jpg
+
     # remember what our preferred config is for this output combination
     save_fingerprint ${1:-}
 
@@ -135,6 +145,7 @@ execute () {
     
     # journal and notification
     log_notify "${1:-} ${LOGIC:-}"
+
 }
 
 save_fingerprint () {
@@ -326,6 +337,18 @@ mirror () {
     log_notify "Switch to external mirror of internal display"
     execute "$FUNCNAME"
     }
+
+backlight () {
+    echo TESTING $(date) >> /home/ethan/tmp/test.log
+    case ${1:-} in
+        u*|i*|+)    xbacklight + 20     ;;
+        d*|-)       xbacklight - 20     ;;
+        batt)       xbacklight = 40     ;;
+        ac)         xbacklight = 100    ;;
+        *)          xbacklight = 100    ;;
+    esac
+
+}
 
 main $*
 

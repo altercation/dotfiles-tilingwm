@@ -299,13 +299,14 @@ wsGen   = "GEN"
 wsWrk   = "WRK"
 wsCom   = "COM"
 wsSys   = "SYS"
+wsMon   = "MON"
 wsAv    = "AV"
 wsRw    = "RW"
 wsRad   = "RAD"
 wsTmp   = "TMP"
 
 -- myWorkspaces = map show [1..9]
-myWorkspaces = [wsGen, wsWrk, wsCom, wsSys, wsAv, wsRw, wsTmp]
+myWorkspaces = [wsGen, wsWrk, wsCom, wsSys, wsMon, wsAv, wsRw, wsTmp]
 
 projects :: [Project]
 projects =
@@ -322,6 +323,11 @@ projects =
                                                 spawnOn wsSys myTerminal
                 }
 
+    , Project   { projectName       = wsMon
+                , projectDirectory  = "~/"
+                , projectStartHook  = Just $ do runInTerm "-name glances" "glances"
+                }
+
     , Project   { projectName       = wsWrk
                 , projectDirectory  = "~/wrk"
                 , projectStartHook  = Just $ do spawnOn wsWrk myTerminal
@@ -331,6 +337,11 @@ projects =
     , Project   { projectName       = wsRad
                 , projectDirectory  = "~/"
                 , projectStartHook  = Just $ do spawn myBrowser
+                }
+
+    , Project   { projectName       = wsTmp
+                , projectDirectory  = "~/"
+                , projectStartHook  = Just $ do spawn $ myBrowser ++ " https://mail.google.com/mail/u/0/#inbox/1599e6883149eeac"
                 }
     ]
 
@@ -1369,6 +1380,7 @@ myKeys conf = let
 --                                                                                    , (P.sendKey controlMask xK_c)
 --                                                                                    , unsafeWithSelection "notify-send"])
       ("M4-a"                   , addName "Notify w current X selection" $  unsafeWithSelection "notify-send")
+    , ("M4-7"                   , addName "TESTING"                      $  runInTerm "-name glances" "glances" )
     , ("M4-u"                   , addName "Copy current browser URL"     $  spawn "$HOME/bin/wm/url-actions")
     , ("M4-d"                   , addName "Display menu"                 $  spawn "$HOME/bin/wm/displayctl menu")
     ] ^++^
@@ -1512,14 +1524,13 @@ myLogHook h = do
     --dynamicLogWithPP $ defaultPP
     dynamicLogWithPP $ def
 
-        -- { ppCurrent             = xmobarColor active "" . wrap "[" "]"
-        { ppCurrent             = wrap "<fc=#FFFFFF,#FF0000>" "</fc>"
+        { ppCurrent             = xmobarColor active "" . wrap "[" "]"
         , ppTitle               = xmobarColor active "" . shorten 80
         , ppVisible             = wrap "(" ")"
         , ppUrgent              = xmobarColor red "" . wrap " " " "
         , ppHidden              = check
         , ppHiddenNoWindows     = const ""
-        , ppSep                 = xmobarColor red blue " : "
+        , ppSep                 = xmobarColor red blue "  :  "
         , ppWsSep               = " "
         , ppLayout              = xmobarColor yellow ""
         , ppOrder               = id
@@ -1534,6 +1545,7 @@ myFadeHook = composeAll
     [ opaque -- default to opaque
     , isUnfocused --> opacity 0.85
     , (className =? "Terminator") <&&> (isUnfocused) --> opacity 0.9
+    , (className =? "URxvt") <&&> (isUnfocused) --> opacity 0.9
     , fmap ("Google" `isPrefixOf`) className --> opaque
     , isDialog --> opaque 
     --, isUnfocused --> opacity 0.55
@@ -1564,6 +1576,7 @@ myManageHook =
         manageSpecific = composeOne
             [ resource =? "desktop_window" -?> doIgnore
             , resource =? "stalonetray"    -?> doIgnore
+            , resource =? "vlc"    -?> doFloat
             , resource =? trelloResource -?> doFullFloat
             , resource =? trelloWorkResource -?> doFullFloat
             , resource =? googleMusicResource -?> doFullFloat

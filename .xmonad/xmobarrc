@@ -57,7 +57,7 @@ Config
             , "-h", "#b58900"
             , "--" -- battery specific options
             -- discharging status
-            , "-o"  , "<fn=1>\xf240</fn> <left>% (<timeleft>)"
+            , "-o"  , "<fn=1>\xf242</fn> <left>% (<timeleft>) <watts>"
             -- AC "on" status
             , "-O"  , "<fn=1>\xf1e6</fn> <left>%"
             -- charged status
@@ -65,7 +65,7 @@ Config
             , "--off-icon-pattern", "<fn=1>\xf1e6</fn>"
             , "--on-icon-pattern", "<fn=1>\xf1e6</fn>"
             ] 10
-        , Run Date "<fc=#268bd2><fn=1>\xf073</fn> %a %_d %b %Y</fc>   <fc=#2AA198><fn=1></fn> %H:%M:%S</fc>" "date" 10
+        , Run Date "<fc=#268bd2><fn=1>\xf073</fn> %a %_d %b %Y | d.%j w.%W</fc>   <fc=#2AA198><fn=1></fn> %H:%M:%S</fc>" "date" 10
         , Run Network "enp0s31f6"
             [ "-t", " <fc=#6c71c4><fn=1>\xf065</fn> ETH<rxipat></fc>"
             ] 10 
@@ -83,10 +83,11 @@ Config
             , "-n", "#6c71c4" -- violet
             , "-h", "#6c71c4" -- violet
             ] 10
+        , Run Com "status-net" [] "statusnet" 50
         , Run StdinReader]
         , sepChar            = "%"
         , alignSep           = "}{"
-        , template           = "%StdinReader% }{ %cpu%%memory% %wlp4s0wi%%enp0s31f6%   %default:Master%   %battery%   %date%   %KBFI%            "
+        , template           = "%StdinReader% }{ %cpu%%memory%   %statusnet% %wlp4s0wi%%enp0s31f6%   %default:Master%   %battery%   %date%   %KBFI%            "
         --, template           = "%StdinReader% }{ %wlp4s0wi% %default:Master% %multicpu% %cpufreq% %memory% %battery% %date% %KBFI%            "
     }
 

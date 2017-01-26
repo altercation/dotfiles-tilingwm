@@ -1,0 +1,22 @@
+Script started on Tue 24 Jan 2017 08:03:19 PM PST
+*  SSID                 MODE   CHAN  RATE       SIGNAL  BARS  SECURITY  
+[32m [0m  [32mbeehive[0m              [32mInfra[0m  [32m1[0m     [32m54 Mbit/s[0m  [32m100[0m     [32m▂▄▆█[0m  [32mWPA2[0m      
+[32m [0m  [32mdaedalus[0m             [32mInfra[0m  [32m1[0m     [32m54 Mbit/s[0m  [32m100[0m     [32m▂▄▆█[0m  [32mWPA2[0m      
+[32m [0m  [32mdaedalus[0m             [32mInfra[0m  [32m6[0m     [32m54 Mbit/s[0m  [32m87[0m      [32m▂▄▆█[0m  [32mWPA2[0m      
+[32m [0m  [32mbeehive[0m              [32mInfra[0m  [32m6[0m     [32m54 Mbit/s[0m  [32m84[0m      [32m▂▄▆█[0m  [32mWPA2[0m      
+[32m*[0m  [33mbeehive[0m              [33mInfra[0m  [33m36[0m    [33m54 Mbit/s[0m  [33m75[0m      [33m▂▄▆_[0m  [33mWPA2[0m      
+[33m [0m  [33mbeehive[0m              [33mInfra[0m  [33m36[0m    [33m54 Mbit/s[0m  [33m69[0m      [33m▂▄▆_[0m  [33mWPA2[0m      
+[33m [0m  [33mdaedalus[0m             [33mInfra[0m  [33m36[0m    [33m54 Mbit/s[0m  [33m69[0m      [33m▂▄▆_[0m  [33mWPA2[0m      
+[35m [0m  [35m--[0m                   [35mInfra[0m  [35m11[0m    [35m54 Mbit/s[0m  [35m52[0m      [35m▂▄__[0m  [35m[0m          
+[35m [0m  [35mbeehive[0m              [35mInfra[0m  [35m4[0m     [35m54 Mbit/s[0m  [35m35[0m      [35m▂▄__[0m  [35mWPA2[0m      
+[35m [0m  [35mdaedalus[0m             [35mInfra[0m  [35m4[0m     [35m54 Mbit/s[0m  [35m35[0m      [35m▂▄__[0m  [35mWPA2[0m      
+[35m [0m  [35m--[0m                   [35mInfra[0m  [35m48[0m    [35m54 Mbit/s[0m  [35m35[0m      [35m▂▄__[0m  [35mWPA1 WPA2[0m 
+[35m [0m  [35mGLNet1-5G[0m            [35mInfra[0m  [35m48[0m    [35m54 Mbit/s[0m  [35m35[0m      [35m▂▄__[0m  [35mWPA1 WPA2[0m 
+[35m [0m  [35mbeehive[0m              [35mInfra[0m  [35m157[0m   [35m54 Mbit/s[0m  [35m35[0m      [35m▂▄__[0m  [35mWPA2[0m      
+[35m [0m  [35mdaedalus[0m             [35mInfra[0m  [35m157[0m   [35m54 Mbit/s[0m  [35m35[0m      [35m▂▄__[0m  [35mWPA2[0m      
+[35m [0m  [35mngHub_319438NW0662E[0m  [35mInfra[0m  [35m11[0m    [35m54 Mbit/s[0m  [35m34[0m      [35m▂▄__[0m  [35mWPA2[0m      
+[36m [0m  [36mCenturyLink3817[0m      [36mInfra[0m  [36m1[0m     [36m54 Mbit/s[0m  [36m29[0m      [36m▂___[0m  [36mWPA1 WPA2[0m 
+[36m [0m  [36mxfinitywifi[0m          [36mInfra[0m  [36m1[0m     [36m54 Mbit/s[0m  [36m29[0m      [36m▂___[0m  [36m[0m          
+[36m [0m  [36mHOME-BF32[0m            [36mInfra[0m  [36m1[0m     [36m54 Mbit/s[0m  [36m29[0m      [36m▂___[0m  [36mWPA1 WPA2[0m 
+[36m [0m  [36m--[0m                   [36mInfra[0m  [36m1[0m     [36m54 Mbit/s[0m  [36m29[0m      [36m▂___[0m  [36mWPA2[0m      
+[36m [0m  [36mGLNet1[0m               [36mInfra[0m  [36m11[0m    [36m54 Mbit/s[0m  [36m29[0m      [36m▂___[0m  [36mWPA1 WPA2[0m 

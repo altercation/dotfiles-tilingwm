@@ -1,0 +1,40 @@
+#!/bin/sh
+
+set -eu
+
+# ----------------------------------------------------------------------
+# General
+# ----------------------------------------------------------------------
+
+SCRIPTNAME=$(basename $0)
+SCRIPTDIR=$(dirname $(readlink -f $0))
+# TODO: better way to grab username
+USERNAME=$(echo $SCRIPTDIR | sed "s_/home/\([^/]\+\).*_\1_")
+_UID="$(id -u $USERNAME)"
+export DISPLAY=":0"
+export XAUTHORITY=/home/$USERNAME/.Xauthority
+CONFIG=/home/$USERNAME/.config/$SCRIPTNAME
+CMDBASE="xrandr -d $DISPLAY"
+
+main () {
+    case ${1:-} in
+        vol*) shift; volume $*  ;;
+        re*)  rescan            ;;
+    esac
+}
+
+rescan () {
+    pacmd unload-module module-udev-detect && pacmd load-module module-udev-detect
+}
+
+volume () {
+    case ${1:-} in
+        up)     pactl set-sink-volume 0 +5%     ;;
+        down)   pactl set-sink-volume 0 -5%     ;;
+        mute)   pactl set-sink-mute 0 toggle    ;;
+    esac
+}
+
+main $*
+
+# vim: ft=sh:expandtab:ts=4:shiftwidth=4
