@@ -45,8 +45,16 @@ esac
 eth="$(ip -o address | grep -i "$dev_eth *inet ")"
 if [ -n "$eth" ]
 then
-    eth="${eth##*inet }"
-    eth_status=" <fn=1></fn> ${eth%%/*}"
+    #eth="${eth##*inet }"
+    speed="$(cat /sys/class/net/$dev_eth/speed)"
+    case $speed in
+        10) speed="10Base-T" ;;
+        100) speed="100Base-T" ;;
+        1000) speed="Gigabit" ;;
+        *) speed="UNKNOWN $speed" ;;
+    esac
+    #eth_status=" <fn=1></fn> $speed ${eth%%/*}"
+    eth_status=" <fn=1></fn> $speed"
 fi
 
 ssid="$(iw dev $dev_wifi link | grep -i SSID)"
@@ -56,23 +64,43 @@ then
     signal="${signal#*-}"
     signal="${signal%% *}"
     signal="$((2*(100-signal)))"
+        
+#    if   ((signal < 20))
+#    then
+#        sigicon="⠀"
+#    elif ((signal < 40))
+#    then
+#        sigicon="⣀"
+#    elif ((signal < 60))
+#    then
+#        sigicon="⣤"
+#    elif ((signal < 80))
+#    then
+#        sigicon="⣶"
+#    else
+#        sigicon="⣿"
+#    fi
+    signal=$((signal/5*5)) # get rid of some jitter
+    ((signal > 100)) && signal=100
+    #    ▁ ▂ ▃ ▄ ▅ ▆ ▇ █
     wifi_status=" <fn=1>$wifi_icon</fn> ${signal}% ${ssid##*SSID: }"
-    if [ -n "$eth" ]
-    then
-        wifi_ip="$(ip -o address | grep -i "$dev_wifi *inet ")"
-        wifi_ip=" ${wifi_ip##*inet }"
-        wifi_status="$wifi_status${wifi_ip%%/*}"
-    fi
+#    if [ -n "$eth" ]
+#    then
+#        wifi_ip="$(ip -o address | grep -i "$dev_wifi *inet ")"
+#        wifi_ip=" ${wifi_ip##*inet }"
+#        wifi_status="$wifi_status${wifi_ip%%/*}"
+#    fi
 fi
 
 vpn="$(ip -o address | grep -i "$dev_vpn *inet ")"
 if [ -n "$vpn" ]
 then
-    vpn="${vpn##*inet }"
-    vpn_status=" <fn=1></fn> ${vpn%%/*}"
+    #vpn="${vpn##*inet }"
+    #vpn_status="<fn=1></fn> ${vpn%%/*}"
+    vpn_status="<fn=1></fn> "
     color=$green
 else
-    vpn_status=" <fn=1></fn>"
+    vpn_status="<fn=1></fn> "
 fi
 
 echo "<fc=$color>${vpn_status}<fn=1>$icon</fn>${connectivity##*full}$wifi_status$eth_status</fc>"

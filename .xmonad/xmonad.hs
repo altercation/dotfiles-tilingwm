@@ -37,6 +37,8 @@
 
  NON XMONAD SPECIFIC
 
+ * fix unplug events that throw false battery warning
+ * fix volume controls
  * switch to urxvt with dynamic font sizing?
  * screen locker
  * audio tweaking ... volume working in all cases? output selected intelligently
@@ -54,11 +56,12 @@
  * power (test tlp again? need way to see if it's doing a whole lot of good, or should I just use manual options... either way nvidia is power hungry)
  * screensaver and screen stuff, caffeine
  * check on avoidmaster for float issues https://wiki.haskell.org/Xmonad/Frequently_asked_questions
- * look intot X.*.PositionStore* as well as whatever the other method of retaining float pos was
  * consider inserting chrome above instead of below on stack
+ * either an M-s d style submap for system operations, or top level M4-d M4-s style bindings
 
  DEFER (should do but uncertain how to solve after initial cursory review, so will defer till have more time to research)
 
+ * look intot X.*.PositionStore* as well as whatever the other method of retaining float pos was
  * quickly swapping two windows between master and slave works nicely. I get a little of this with promote, but I'm
    sure there is a more comprehensive solution I could implement (cycle windows / recent windows?)
  ! Want to be able to spawn a new window directly into a sublayout, not
@@ -1381,8 +1384,10 @@ myKeys conf = let
 --                                                                                    , unsafeWithSelection "notify-send"])
       ("M4-a"                   , addName "Notify w current X selection" $  unsafeWithSelection "notify-send")
     , ("M4-7"                   , addName "TESTING"                      $  runInTerm "-name glances" "glances" )
-    , ("M4-u"                   , addName "Copy current browser URL"     $  spawn "$HOME/bin/wm/url-actions")
-    , ("M4-d"                   , addName "Display menu"                 $  spawn "$HOME/bin/wm/displayctl menu")
+    , ("M4-u"                   , addName "Copy current browser URL"     $  spawn "url-actions")
+    , ("M4-d"                   , addName "Display launcher"             $  spawn "displayctl menu")
+    , ("M4-w"                   , addName "Networking launcher"          $  spawn "nmcli_dmenu")
+    , ("M4-o"                   , addName "On-screen keys"               $  spawn "killall screenkey &>/dev/null || screenkey --no-systray")
     ] ^++^
 
     -----------------------------------------------------------------------
@@ -1488,12 +1493,15 @@ myMouseBindings (XConfig {XMonad.modMask = myModMask}) = M.fromList $
 ---------------------------------------------------------------------------
 
 myStartupHook = do
+
     -- init-tilingwm sets up all major "desktop environment" like components
     spawnOnce "$HOME/bin/wm/init-tilingwm"
+
     -- init-tray kills and restarts stalone tray, hence just "spawn" so it
     -- runs on restart and will suffice to reposition tray on display changes
     -- TODO: evaluate moving to a "restart tray only" option on display change
-    spawn     "$HOME/bin/wm/init-tray"
+    -- spawn     "$HOME/bin/wm/init-tray"
+
     setDefaultCursor xC_left_ptr
 
 quitXmonad :: X ()
@@ -1525,7 +1533,7 @@ myLogHook h = do
     dynamicLogWithPP $ def
 
         { ppCurrent             = xmobarColor active "" . wrap "[" "]"
-        , ppTitle               = xmobarColor active "" . shorten 80
+        , ppTitle               = xmobarColor active "" . shorten 50
         , ppVisible             = wrap "(" ")"
         , ppUrgent              = xmobarColor red "" . wrap " " " "
         , ppHidden              = check

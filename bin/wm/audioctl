@@ -28,11 +28,14 @@ rescan () {
 }
 
 volume () {
-    case ${1:-} in
-        up)     pactl set-sink-volume 0 +5%     ;;
-        down)   pactl set-sink-volume 0 -5%     ;;
-        mute)   pactl set-sink-mute 0 toggle    ;;
-    esac
+    for i in $(seq 0 9)
+    do
+        case ${1:-} in
+            up)     pactl set-sink-volume $i +5%  &>/dev/null || :   ;;
+            down)   pactl set-sink-volume $i -5%  &>/dev/null || :   ;;
+            mute)   pactl set-sink-mute $i toggle &>/dev/null || :   ;;
+        esac
+    done
 }
 
 main $*

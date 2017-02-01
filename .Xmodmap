@@ -258,12 +258,30 @@ keycode  66 = Control_L Control_L Control_L
 ! remove mod1 current values so we can add our Hyper_L to it
 clear mod1
 clear mod4
+
 ! make tab a hyper key
-keycode 23 = Hyper_L Hyper_R
-add mod1 = Alt_L Alt_R Meta_L Hyper_L
-add mod4 = Super_L Super_R Super_L
+!keycode 23 = Hyper_L Meta_L Hyper_L Meta_L
+keycode 23 = Hyper_L
+
+! make backslash a hyper key
+!keycode 51 = Hyper_R Meta_R Hyper_R Meta_R
+keycode 51 = Hyper_R
+
+! make space a hyper key
+!keycode 65 = Meta_L
+
+! reassign mod values to include Hyper
+!add mod1 = Alt_L Alt_R Meta_L Hyper_L Hyper_R
+add mod1 = Alt_L Alt_R Hyper_L Hyper_R Meta_L Meta_R
+add mod4 = Super_L Super_R
+
 ! keep Tab available for xcape use by mapping it to an otherwise unused keycode
-keycode 254 = Tab
-keycode 255 = ISO_Left_Tab
+!keycode 254 = Tab
+!keycode 255 = ISO_Left_Tab
+keycode 254 = Tab ISO_Left_Tab Tab ISO_Left_Tab
+keycode 253 = backslash bar backslash bar
+!keycode 252 = space NoSymbol space
+
+!keycode 253 = bar
 !For reference, xcape command from my .xprofile
 !xcape -e "Hyper_L=Tab;Hyper_R=ISO_Left_Tab"

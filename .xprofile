@@ -1,4 +1,43 @@
+# .xprofile
+#
+# use this in lieu of .xinitrc as .xinitrc won't be sourced if using
+# a display manager, while this should.
+#
+# note that other key startup items are run via bin/wm/init-tilingwm
+
+
 xrdb -DSOLARIZED_DARK -load ~/.Xresources
+
+
+# ----------------------------------------------------------------------
+# CapsLock as CTRL
+setxkbmap -option ctrl:nocaps
+
+# ----------------------------------------------------------------------
+# Currently using tab as both tab key and a modifier. Works well though
+# I need to switch away from using Xmodmap. Use xkb (via localectl) seems
+# like a better idea.
+
+# make tab a hyper and set hyper as mod1
+[[ -f ~/.Xmodmap ]] && xmodmap ~/.Xmodmap
+
+# xcape depends on .Xmodmap being set correctly (TODO: switch to xkb)
+# this lets the (now hyper_L) tab key act normally unless used as a
+# modifier
+#xcape -e "Hyper_L=Tab;Meta_L=ISO_Left_Tab;Hyper_R=backslash;Meta_R=bar"
+xcape -e "Hyper_L=Tab;Hyper_R=backslash;Meta_L=space"
+#xcape -e "Hyper_L=Tab;Hyper_R=backslash"
+
+
+# ----------------------------------------------------------------------
+# run xsettingsd in lieu of gnome-settings-daemon
+# this helps pass certain values to gtk programs (fonts, for example)
+# cf https://github.com/derat/xsettingsd/wiki/Installation
+# TODO: wiki mentions using .xsession .. should i be using that instead
+# of .xprofile? just move into my init file? make a new .shell like
+# config file or folder?
+
+/usr/bin/xsettingsd &
 
 # ----------------------------------------------------------------------
 # resolution & display 
@@ -12,28 +51,6 @@ xrandr --dpi 96
 # connection data, and if so will apply either that value or a default
 # based on state of connected external displays.
 
-$HOME/bin/wm/displayctl
-
-
-# ----------------------------------------------------------------------
-# Currently using tab as both tab key and a modifier. Works well though
-# I need to switch away from using Xmodmap. Use xkb (via localectl) seems
-# like a better idea.
-
-[[ -f ~/.Xmodmap ]] && xmodmap ~/.Xmodmap
-# depends on .Xmodmap being set correctly (TODO: switch to xkb)
-xcape -e "Hyper_L=Tab;Hyper_R=ISO_Left_Tab"
-
-
-# ----------------------------------------------------------------------
-# run xsettingsd in lieu of gnome-settings-daemon
-# this helps pass certain values to gtk programs (fonts, for example)
-# cf https://github.com/derat/xsettingsd/wiki/Installation
-# TODO: wiki mentions using .xsession .. should i be using that instead
-# of .xprofile? just move into my init file? make a new .shell like
-# config file or folder?
-
-/usr/bin/xsettingsd &
-
+sleep 1 && $HOME/bin/wm/displayctl
 
 export TERMINAL=urxvt

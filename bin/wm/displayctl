@@ -58,22 +58,25 @@ main () {
         in*)    internal ;;
         ex*)    external ;;
         span)   span     ;;
+        spanex) spanex   ;;
         mirror) mirror   ;;
         toggle) toggle   ;;
         auto)   auto     ;;
-        backlight|back|bl|bright) echo "HERE" >> /home/ethan/tmp/test.log; backlight ${2:-} ;;
+        backlight|back|bl|bright) backlight ${2:-} ;;
+        fing*)  report_fingerprint ;;
         *)      usage ;;
     esac
 }
 
 
 menu () {
-    items="auto internal external span mirror"
-    result=$((for item in $items; do echo $item; done) | launch-menu "Display Mode")
+    items="auto internal external span spanex mirror"
+    result=$((for item in $items; do echo $item; done) | launcher "Display Mode")
     case ${result:-} in
         in*)    internal ;;
         ex*)    external ;;
         span)   span     ;;
+        spanex) spanex   ;;
         mirror) mirror   ;;
         auto)   auto     ;;
         *)      :        ;;
@@ -81,7 +84,21 @@ menu () {
 }
 
 usage () {
-    (>&2 echo -e "Usage:\n\n   $SCRIPTNAME internal | external | mirror | span | auto | help\n")
+    (>&2 echo "
+    Usage:
+
+    $SCRIPTNAME [mode]
+    $SCRIPTNAME [backlight up|down]
+    $SCRIPTNAME [fingerprint]   
+
+    where [mode] is one of:
+    internal
+    external
+    span
+    spanex
+    mirror
+    auto
+    ")
 }
 
 # ----------------------------------------------------------------------
@@ -115,15 +132,20 @@ notifications () {
 
 execute () {
 
+    # record mode (should be $1 via colling mode function)
+    mode="${1:-}"
+
     #TODO: the restart of dunst is probably messing with our flock on the lockfile
     #notifications kill
 
     # execute the output change
     eval $CMD
-    xrandr -q > tmp/dc_before_$1
-    [ ${1:-} = "span" ] && sleep 3
-    [ ${1:-} = "mirror" ] && sleep 4
-    xrandr -q > tmp/dc_after_$1
+
+    # sleep in specific cases to keep x from crashing when we run subsequent commands
+    case $mode in
+        span*)  sleep 3 ;;
+        mirror) sleep 4 ;;
+    esac
 
     # get xscreensaver status and eat any error with a null function (otherwise script errors out)
     xsaver_status="$(xscreensaver-command -time 2>&1)" || :
@@ -138,13 +160,13 @@ execute () {
     feh --bg-fill /home/ethan/tmp/lowpoly6.jpg
 
     # remember what our preferred config is for this output combination
-    save_fingerprint ${1:-}
+    save_fingerprint ${mode:-}
 
     #TODO: the restart of dunst is probably messing with our flock on the lockfile
     #notifications init
     
     # journal and notification
-    log_notify "${1:-} ${LOGIC:-}"
+    log_notify "${mode:-} ${LOGIC:-}"
 
 }
 
@@ -162,6 +184,18 @@ generate_fingerprint () {
     # get a fingerprint for current connected displays based on EDIDs
     EDID_FINGERPRINT="$(echo "$XRANDRV" | get_edids)"
     echo FINGERPRINT_$(echo $EDID_FINGERPRINT | sha1sum - | cut -d " " -f 1)
+}
+
+report_fingerprint () {
+    fingerprint=$(generate_fingerprint)
+    if [ -f $CONFIG ]
+    then
+        . $CONFIG
+        eval "fingerprint_mode=\"\${${fingerprint}:-}\""
+    fi
+    echo "Using config file: $CONFIG"
+    echo "Fingerprint for currently connected displays is: ${fingerprint##FINGERPRINT_}"
+    echo "Saved mode for this fingerprint is: ${fingerprint_mode:-unset}"
 }
 
 get_edids () {
@@ -199,6 +233,7 @@ get_internal_output () {
     done
     echo "$internal"
 }
+
 get_default_mode () {
     output=$1
     while read line
@@ -257,7 +292,7 @@ auto () {
         # then run the fingerprinted mode or simply switch to
         # external if no (or invalid) fingerprint is found
         case ${fingerprint_mode:-} in
-            internal|external|span|mirror) $fingerprint_mode ;;
+            internal|external|span|spanex|mirror) $fingerprint_mode ;;
             *) external ;;
         esac
     fi
@@ -302,6 +337,53 @@ external () {
 }
 
 span () {
+    CMD="$CMDBASE --output $INTERNAL_OUTPUT --scale 1x1 --primary --mode $INTERNAL_OUTPUT_MODE --pos 0x0"
+    NEIGHBOR=$INTERNAL_OUTPUT
+
+    for OUTPUT in $ALL_OUTPUTS
+    do
+        eval '
+        case $OUTPUT in
+            $INTERNAL_OUTPUT) : ;; 
+            '$CONNECTED_OUTPUTS') CMD="$CMD --output $OUTPUT --scale 1x1 --auto --right-of $NEIGHBOR"; NEIGHBOR=$OUTPUT ;;
+            *) : ;;
+        esac'
+    done
+
+    log_notify "Switch to spanned displays"
+    execute "$FUNCNAME"
+    }
+
+spanex () {
+    CMD="$CMDBASE --output $INTERNAL_OUTPUT --off"
+    NEIGHBOR=$INTERNAL_OUTPUT
+    PRIMARY_SET=false
+    for OUTPUT in $ALL_OUTPUTS
+    do
+        if ! $PRIMARY_SET
+        then
+            eval '
+            case $OUTPUT in
+                $INTERNAL_OUTPUT) : ;;
+                '$CONNECTED_OUTPUTS') PRIMARY_SET=true; CMD="$CMD --output $OUTPUT --scale 1x1 --auto --primary"; NEIGHBOR=$OUTPUT ;;
+                *) : ;;
+            esac'
+        else
+            eval '
+            case $OUTPUT in
+                $INTERNAL_OUTPUT) : ;;
+                '$CONNECTED_OUTPUTS') CMD="$CMD --output $OUTPUT --scale 1x1 --auto --right-of $NEIGHBOR"; NEIGHBOR=$OUTPUT ;;
+                *) : ;;
+            esac'
+        fi
+    done
+
+    log_notify "Switch to spanned displays"
+    echo "CMD is $CMD"
+    execute "$FUNCNAME"
+    }
+
+oldspan () {
     CMD="$CMDBASE --output $INTERNAL_OUTPUT --scale 1x1 --primary --mode $INTERNAL_OUTPUT_MODE --pos 0x0"
     NEIGHBOR=$INTERNAL_OUTPUT
     OFFSET="$(echo $INTERNAL_OUTPUT_MODE | cut -d 'x' -f 1)"
