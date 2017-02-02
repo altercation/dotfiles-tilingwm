@@ -11,7 +11,7 @@ xrdb -DSOLARIZED_DARK -load ~/.Xresources
 
 # ----------------------------------------------------------------------
 # CapsLock as CTRL
-setxkbmap -option ctrl:nocaps
+#setxkbmap -option ctrl:nocaps
 
 # ----------------------------------------------------------------------
 # Currently using tab as both tab key and a modifier. Works well though
@@ -19,13 +19,16 @@ setxkbmap -option ctrl:nocaps
 # like a better idea.
 
 # make tab a hyper and set hyper as mod1
-[[ -f ~/.Xmodmap ]] && xmodmap ~/.Xmodmap
+#[[ -f ~/.Xmodmap ]] && xmodmap ~/.Xmodmap
 
 # xcape depends on .Xmodmap being set correctly (TODO: switch to xkb)
 # this lets the (now hyper_L) tab key act normally unless used as a
 # modifier
-#xcape -e "Hyper_L=Tab;Meta_L=ISO_Left_Tab;Hyper_R=backslash;Meta_R=bar"
-xcape -e "Hyper_L=Tab;Hyper_R=backslash;Meta_L=space"
+
+#xcape -e "Hyper_L=Tab;Hyper_R=backslash"
+
+#XKBDIR=$HOME/.xkb
+#xkbcomp -w3 -I$XKBDIR $XKBDIR/keymap/custom $DISPLAY
 #xcape -e "Hyper_L=Tab;Hyper_R=backslash"
 
 
@@ -51,6 +54,8 @@ xrandr --dpi 96
 # connection data, and if so will apply either that value or a default
 # based on state of connected external displays.
 
-sleep 1 && $HOME/bin/wm/displayctl
+# x is crashing on startup due to displayctl!!!
+$HOME/bin/wm/displayctl
 
 export TERMINAL=urxvt
+

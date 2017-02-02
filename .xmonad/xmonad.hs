@@ -274,7 +274,7 @@ main = do
         $ withNavigation2DConfig myNav2DConf
         $ withUrgencyHook NoUrgencyHook
         $ ewmh
-        $ addDescrKeys' ((mod1Mask, xK_F1), showKeybindings) myKeys
+        $ addDescrKeys' ((myModMask, xK_F1), showKeybindings) myKeys
         $ myConfig xmproc
 
 myConfig p = def
@@ -410,18 +410,18 @@ plexInfix           = "Plex"
 plexResource        = "crx_fpniocchabmgenibceglhnfeimmdhdfm"
 isPlex              = (resource =? plexResource)
 
---isConsole           = (className =? myTerminalClass)
---                    <&&> (stringProperty "WM_WINDOW_ROLE" =? "Scratchpad")
---myConsole           = "terminator -T console -p console --role=Scratchpad"
+isConsole           = (className =? "Terminator")
+                    <&&> (stringProperty "WM_WINDOW_ROLE" =? "Scratchpad")
+myConsole           = "terminator -T console -p console --role=Scratchpad"
 
 scratchpads =
-    --[   (NS "console"  myConsole isConsole nonFloating)
     [   (NS "hangoutsPersonal"  hangoutsCommand isPersonalHangouts defaultFloating)
     ,   (NS "hangoutsWork"  hangoutsCommand isWorkHangouts defaultFloating)
     ,   (NS "trello"  trelloCommand isTrello nonFloating)
     ,   (NS "trelloWork"  trelloWorkCommand isTrelloWork nonFloating)
     ,   (NS "googleMusic"  googleMusicCommand isGoogleMusic nonFloating)
     ,   (NS "plex"  plexCommand isPlex defaultFloating)
+    ,   (NS "console"  myConsole isConsole nonFloating)
     ] 
 
 ------------------------------------------------------------------------}}}
@@ -503,6 +503,13 @@ myPromptTheme = def
     , borderColor           = base03
     , promptBorderWidth     = 0
     , height                = prompt
+    , position              = Top
+    }
+
+warmPromptTheme = myPromptTheme
+    { bgColor               = yellow
+    , fgColor               = base03
+    , position              = Top
     }
 
 hotPromptTheme = myPromptTheme
@@ -1049,10 +1056,11 @@ myLayoutHook = showWorkspaceName
 -- Bindings                                                             {{{
 ---------------------------------------------------------------------------
 
+myModMask = mod4Mask -- super (and on my system, hyper) keys
+
 -- Display keyboard mappings using zenity
 -- from https://github.com/thomasf/dotfiles-thomasf-xmonad/
 --              blob/master/.xmonad/lib/XMonad/Config/A00001.hs
-
 showKeybindings :: [((KeyMask, KeySym), NamedAction)] -> NamedAction
 showKeybindings x = addName "Show Keybindings" $ io $ do
     h <- spawnPipe "zenity --text-info --font=terminus"
@@ -1074,16 +1082,14 @@ showKeybindings x = addName "Show Keybindings" $ io $ do
 -- M1-C-Shift-semicolon 1 Copy w to ws
 -- M1-C-Shift-semicolon 2 Copy w to ws
 
--- wsKeys = map show $ [1..9] ++ [0]
--- wsKeys = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]
-
 wsKeys = map show $ [1..9] ++ [0]
 
+-- any workspace but scratchpad
 notSP = (return $ ("NSP" /=) . W.tag) :: X (WindowSpace -> Bool)
--- | any workspace but scratchpad
 shiftAndView dir = findWorkspace getSortByIndex dir (WSIs notSP) 1
         >>= \t -> (windows . W.shift $ t) >> (windows . W.greedyView $ t)
--- | hidden, non-empty workspaces less scratchpad
+
+-- hidden, non-empty workspaces less scratchpad
 shiftAndView' dir = findWorkspace getSortByIndexNoSP dir HiddenNonEmptyWS 1
         >>= \t -> (windows . W.shift $ t) >> (windows . W.greedyView $ t)
 nextNonEmptyWS = findWorkspace getSortByIndexNoSP Next HiddenNonEmptyWS 1
@@ -1092,7 +1098,8 @@ prevNonEmptyWS = findWorkspace getSortByIndexNoSP Prev HiddenNonEmptyWS 1
         >>= \t -> (windows . W.view $ t)
 getSortByIndexNoSP =
         fmap (.namedScratchpadFilterOutWorkspace) getSortByIndex
--- | toggle any workspace but scratchpad
+
+-- toggle any workspace but scratchpad
 myToggle = windows $ W.view =<< W.tag . head . filter 
         ((\x -> x /= "NSP" && x /= "SP") . W.tag) . W.hidden
 
@@ -1103,27 +1110,27 @@ myKeys conf = let
     dirKeys        = ["j","k","h","l"]
     arrowKeys        = ["<D>","<U>","<L>","<R>"]
     dirs           = [ D,  U,  L,  R ]
+
     --screenAction f        = screenWorkspace >=> flip whenJust (windows . f)
+
     zipM  m nm ks as f = zipWith (\k d -> (m ++ k, addName nm $ f d)) ks as
     zipM' m nm ks as f b = zipWith (\k d -> (m ++ k, addName nm $ f d b)) ks as
+
     -- from xmonad.layout.sublayouts
     focusMaster' st = let (f:fs) = W.integrate st
         in W.Stack f [] fs
     swapMaster' (W.Stack f u d) = W.Stack f [] $ reverse u ++ d
+
     -- try sending one message, fallback if unreceived, then refresh
     tryMsgR x y = sequence_ [(tryMessage_ x y), refresh]
+
     -- warpCursor = warpToWindow (9/10) (9/10)
-    --restart = spawn "xmonad --restart"
-    -- slowRestart = spawn "sleep 0.3 && xmonad --restart"
 
     -- cf https://github.com/pjones/xmonadrc
     --switch :: ProjectTable -> ProjectName -> X ()
     --switch ps name = case Map.lookup name ps of
     --  Just p              -> switchProject p
     --  Nothing | null name -> return ()
---    sdcv word = do
---        output <- runProcessWithInput "sdcv" ["-n", word] ""
---      mySafeSpawn "notify-send" [word, trString output]
 
     -- do something with current X selection
     unsafeWithSelection app = join $ io $ liftM unsafeSpawn $ fmap (\x -> app ++ " " ++ x) getSelection
@@ -1135,67 +1142,141 @@ myKeys conf = let
     in
 
     -----------------------------------------------------------------------
-    -- Global leader
+    -- System / Utilities
     -----------------------------------------------------------------------
-
-    subKeys "Global Leader"
-    [ ("C-' '"                  , addName "Cancel submap"            $ return ())
-    , ("C-' C-'"                , addName "Cancel submap"            $ return ())
-    -- perhaps should have a pass through C-' to application option here
+    subKeys "System"
+    [ ("M-q"                    , addName "Restart XMonad"                  $ spawn "xmonad --restart")
+    , ("M-C-q"                  , addName "Rebuild & restart XMonad"        $ spawn "xmonad --recompile && xmonad --restart")
+    , ("M-S-q"                  , addName "Quit XMonad"                     $ confirmPrompt hotPromptTheme "Quit XMonad" $ io (exitWith ExitSuccess))
+    , ("M-x"                    , addName "Lock screen"                     $ spawn "xset s activate")
+    , ("M-p"                    , addName "Print Screen"                    $ return ())
+  --, ("M-F1"                   , addName "Show Keybindings"                $ return ())
     ] ^++^
 
     -----------------------------------------------------------------------
-    -- Window management                                                   
+    -- Actions
+    -----------------------------------------------------------------------
+    subKeys "Actions"
+    [ ("M-a"                    , addName "Notify w current X selection"    $  unsafeWithSelection "notify-send")
+  --, ("M-7"                    , addName "TESTING"                         $  runInTerm "-name glances" "glances" )
+    , ("M-u"                    , addName "Copy current browser URL"        $  spawn "url-actions")
+    , ("M-o"                    , addName "Display (Output) launcher"       $  spawn "displayctl menu")
+    , ("M-i"                    , addName "Network (Interface) launcher"    $  spawn "nmcli_dmenu")
+    , ("M-,"                    , addName "On-screen keys"                  $  spawn "killall screenkey &>/dev/null || screenkey --no-systray")
+    ] ^++^
+
+    -----------------------------------------------------------------------
+    -- Launchers
+    -----------------------------------------------------------------------
+    subKeys "Launchers"
+    [ ("M-<Space>"              , addName "Launcher"                        $ spawn myLauncher)
+    , ("M-<Return>"             , addName "Terminal"                        $ spawn myTerminal)
+    , ("M-\\"                   , addName "Browser"                         $ spawn myBrowser)
+    , ("M-c"                    , addName "NSP Chat"                        $ bindOn WS [(wsWrk, namedScratchpadAction scratchpads "hangoutsWork"),
+                                                                              ("", namedScratchpadAction scratchpads "hangoutsPersonal")])
+    , ("M-t"                    , addName "NSP Tasks"                       $ bindOn WS [(wsWrk, namedScratchpadAction scratchpads "trelloWork"),
+                                                                              ("", namedScratchpadAction scratchpads "trello")])
+    , ("M-m"                    , addName "NSP Music"                       $ namedScratchpadAction scratchpads "googleMusic")
+    , ("M-v"                    , addName "NSP Video"                       $ namedScratchpadAction scratchpads "plex")
+    , ("M-n"                    , addName "NSP Console"                     $ namedScratchpadAction scratchpads "console")
+    , ("M-s s"                  , addName "Cancel submap"                   $ return ())
+    , ("M-s M-s"                , addName "Cancel submap"                   $ return ())
+    ] ^++^
+
+    -----------------------------------------------------------------------
+    -- Windows
     -----------------------------------------------------------------------
 
-    subKeys "Kill Windows"
+    subKeys "Windows"
+    (
+    [ ("M-<Backspace>"          , addName "Kill"                            kill1)
+    , ("M-S-<Backspace>"        , addName "Kill all"                        $ confirmPrompt hotPromptTheme "kill all" $ killAll)
+    , ("M-d"                    , addName "Duplicate w to all ws"           $ windows copyToAll)
+    , ("M-S-d"                  , addName "Kill other duplicates"           $ killAllOtherCopies)
 
-    [ ("M-<Backspace>"          , addName "Kill"                        kill1)
-    , ("M-S-<Backspace>"        , addName "Kill all"                    $ confirmPrompt hotPromptTheme "kill all" $ killAll)
-    , ("C-<Backspace>"          , addName "Kill"                        kill1)
-    , ("C-S-<Backspace>"        , addName "Kill all"                    $ confirmPrompt hotPromptTheme "kill all" $ killAll)
-    ] ^++^
+    , ("M-b"                    , addName "Promote"                         $ promote) 
 
-    subKeys "Window Copies"
-    [ ("M-c"                    , addName "Copy w to all ws"            $ windows copyToAll)
-    , ("M-S-c"                  , addName "Kill other copies"           $ killAllOtherCopies)
-    , ("C-' c"                  , addName "Copy w to all ws"            $ windows copyToAll)
-    , ("C-' S-c"                , addName "Kill other copies"           $ killAllOtherCopies)
-    ] ^++^
+    , ("M-g"                    , addName "Un-merge from sublayout"         $ withFocused (sendMessage . UnMerge))
+    , ("M-S-g"                  , addName "Merge all into sublayout"        $ withFocused (sendMessage . MergeAll))
+
+    , ("M-z u"                  , addName "Focus urgent"                    focusUrgent)
+    , ("M-z m"                  , addName "Focus master"                    $ windows W.focusMaster)
+
+    , ("M-<Tab>"              	, addName "Focus down"                      $ windows W.focusDown)
+    , ("M-S-<Tab>"              , addName "Focus up"                        $ windows W.focusUp)
+
+    , ("M-'"                    , addName "Cycle current tabs D"            $ bindOn LD [("Tabs", windows W.focusDown), ("", onGroup W.focusDown')])
+    , ("M-;"                    , addName "Cycle current tabs U"            $ bindOn LD [("Tabs", windows W.focusUp), ("", onGroup W.focusUp')])
+
+    -- ComboP specific (can remove after demo)
+    , ("M-C-S-m"                , addName "Combo swap"                      $ sendMessage $ SwapWindow)
+    ]
+
+    ++ zipM' "M-"               "Navigate window"                           dirKeys dirs windowGo True
+    ++ zipM' "M-S-"             "Move window"                               dirKeys dirs windowSwap True
+    ++ zipM  "M-C-"             "Merge w/sublayout"                         dirKeys dirs (sendMessage . pullGroup)
+    ++ zipM' "M-"               "Navigate screen"                           arrowKeys dirs screenGo True
+    ++ zipM' "M-S-"             "Move window to screen"                     arrowKeys dirs windowToScreen True
+    ++ zipM' "M-C-"             "Swap workspace to screen"                  arrowKeys dirs screenSwap True
+
+    ) ^++^
 
     -----------------------------------------------------------------------
     -- Workspaces & Projects
     -----------------------------------------------------------------------
 
+    -- original version was for dynamic workspaces
+    --    subKeys "{a,o,e,u,i,d,...} focus and move window between workspaces"
+    --    (  zipMod "View      ws" wsKeys [0..] "M-"      (withNthWorkspace W.greedyView)
+
     subKeys "Workspaces & Projects"
+    (
+    [ ("M-w"                    , addName "Switch to Project"           $ switchProjectPrompt warmPromptTheme)
+    , ("M-S-w"                  , addName "Shift to Project"            $ shiftToProjectPrompt warmPromptTheme)
+    , ("M--"                    , addName "Prev non-empty workspace"    $ prevNonEmptyWS)
+    , ("M-="                    , addName "Next non-empty workspace"    $ nextNonEmptyWS)
+    , ("M-<Escape>"             , addName "Toggle last workspace"       $ toggleWS' ["NSP"])
+    , ("M-`"                    , addName "Toggle last workspace"       $ toggleWS' ["NSP"])
+    ]
+    ++ zipM "M-"                "View      ws"                          wsKeys [0..] (withNthWorkspace W.greedyView)
+    ++ zipM "M-S-"              "Move w to ws"                          wsKeys [0..] (withNthWorkspace W.shift)
+    ++ zipM "M-S-C-"            "Copy w to ws"                          wsKeys [0..] (withNthWorkspace copy)
+    ) ^++^
 
-    [ ("C-<Space>"              , addName "Switch to Project"           $ switchProjectPrompt myPromptTheme)
-    , ("C-S-<Space>"            , addName "Shift to Project"            $ shiftToProjectPrompt myPromptTheme)
-    -- , ("M4-<L>"              , addName "Prev workspace"              $ prevWS)
-    -- , ("M4-<R>"              , addName "Next workspace"              $ nextWS)
+    -- TODO: consider a submap for nav/move to specific workspaces based on first initial
 
-    , ("M-p"                    , addName "Prev non-empty workspace"    $ prevNonEmptyWS)
-    , ("M-n"                    , addName "Next non-empty workspace"    $ nextNonEmptyWS)
-    , ("M-C-p"                  , addName "Prev workspace"              $ prevWS)
-    , ("M-C-n"                  , addName "Next workspace"              $ nextWS)
-    , ("M-S-p"                  , addName "Shift to prev ws"            $ shiftAndView' Prev)
-    , ("M-S-n"                  , addName "Shift to next ws"            $ shiftAndView' Next)
-    , ("M-C-S-p"                , addName "Shift to prev workspace"     $ shiftToPrev)
-    , ("M-C-S-n"                , addName "Shift to next workspace"     $ shiftToNext)
+    -----------------------------------------------------------------------
+    -- Layouts & Sublayouts
+    -----------------------------------------------------------------------
 
-    , ("M-o"                    , addName "Toggle last workspace"       $ toggleWS' ["NSP"])
+    subKeys "Layout Management"
+
+    [ ("M-a"                    , addName "Cycle all layouts"               $ sendMessage NextLayout)
+    , ("M-C-a"                  , addName "Cycle sublayout"                 $ toSubl NextLayout)
+    , ("M-S-a"                  , addName "Reset layout"                    $ setLayout $ XMonad.layoutHook conf)
+
+    , ("M-y"                    , addName "Float tiled w"                   $ withFocused toggleFloat)
+    , ("M-S-y"                  , addName "Tile all floating w"             $ sinkAll)
+
+    , ("M-r"                    , addName "Reflect/Rotate"              $ tryMsgR (Rotate) (XMonad.Layout.MultiToggle.Toggle REFLECTX))
+    , ("M-S-r"                  , addName "Force Reflect (even on BSP)" $ sendMessage (XMonad.Layout.MultiToggle.Toggle REFLECTX))
+
+    -- If following is run on a floating window, the sequence first tiles it.
+    -- Not perfect, but works.
+    , ("M-f"                , addName "Fullscreen"                      $ sequence_ [ (withFocused $ windows . W.sink)
+                                                                        , (sendMessage $ XMonad.Layout.MultiToggle.Toggle FULL) ])
+
+    -- Fake fullscreen fullscreens into the window rect. The expand/shrink
+    -- is a hack to make the full screen paint into the rect properly.
+    -- The tryMsgR handles the BSP vs standard resizing functions.
+    , ("M-S-f"                  , addName "Fake fullscreen"             $ sequence_ [ (P.sendKey P.noModMask xK_F11)
+                                                                                    , (tryMsgR (ExpandTowards L) (Shrink))
+                                                                                    , (tryMsgR (ExpandTowards R) (Expand)) ])
     ] ^++^
 
     -----------------------------------------------------------------------
-    -- Navigation
+    -- Reference
     -----------------------------------------------------------------------
-
-    subKeys "Window Navigation and Movement"
-
-    [ ("M-e"                    , addName "Focus urgent"                focusUrgent)
-    , ("M-m"                    , addName "Focus master"                $ windows W.focusMaster)
-    , ("M-<Tab>"              	, addName "Focus down"                  $ windows W.focusDown)
-    , ("M-S-<Tab>"              , addName "Focus up"                    $ windows W.focusUp)
     -- recent windows not working
     -- , ("M4-<Tab>",              , addName "Cycle recent windows"        $ (cycleRecentWindows [xK_Super_L] xK_Tab xK_Tab))
     -- either not using these much or (in case of two tab items below), they conflict with other bindings
@@ -1213,87 +1294,12 @@ myKeys conf = let
     -- , ("M4-C-S-["               , addName "toSubl IncMasterN -1"        $ toSubl $ IncMasterN (-1))
     -- , ("M4-C-S-<Return>"        , addName "onGroup swapMaster"          $ onGroup swapMaster')
 
-    , ("M-S-p"                  , addName "Promote"                     $ promote) 
-
-    , ("M-u"                    , addName "Un-merge from sublayout"     $ withFocused (sendMessage . UnMerge))
-    , ("M-S-u"                  , addName "Merge all into sublayout"    $ withFocused (sendMessage . MergeAll))
-
-    -- ComboP specific (can remove after demo)
-
-    , ("M4-C-S-m"               , addName "Combo swap"                  $ sendMessage $ SwapWindow)
-
-    ] ^++^
-
-   -- subKeys "Tab Sub-Group Navigation"
-
-
-    subKeys "Directional Navigation and Movement" (
-
-    --[]
-    [ ("M-'"                    , addName "Cycle current tabs D"        $ bindOn LD [("Tabs", windows W.focusDown), ("", onGroup W.focusDown')])
-    , ("M-;"                    , addName "Cycle current tabs U"        $ bindOn LD [("Tabs", windows W.focusUp), ("", onGroup W.focusUp')])
-    ]
-
-    -- Navigation and Movement via X.A.Navigation2D (with window wrap=True)
-
-    ++ zipM' "M-"               "Navigate window"                       dirKeys dirs windowGo True
-    ++ zipM' "M-S-"             "Move window"                           dirKeys dirs windowSwap True
-    ++ zipM  "M-C-"             "Merge w/sublayout"                     dirKeys dirs (sendMessage . pullGroup)
-    ++ zipM' "M4-"              "Navigate screen"                       arrowKeys dirs screenGo True
-    ++ zipM' "M4-S-"            "Move window to screen"                 arrowKeys dirs windowToScreen True
-    ++ zipM' "M4-C-"            "Swap workspace to screen"              arrowKeys dirs screenSwap True
-    -- 
-    -- ++ zipM' "C-"               "Navigate window"                       dirKeys dirs windowGo   True
-    -- ++ zipM' "C-S-"             "Move window"                           dirKeys dirs windowSwap True
-    -- ++ zipM  "C-C-"             "Merge w/sublayout"                     dirKeys dirs (sendMessage . pullGroup)
-
-    ) ^++^
-
-
-
-
-    -----------------------------------------------------------------------
-    -- Layouts & Sublayouts
-    -----------------------------------------------------------------------
-
-    subKeys "Layout Management"
-
-    [ ("M-<Space>"              , addName "Cycle all layouts"           $ sendMessage NextLayout)
-    , ("M-C-<Space>"            , addName "Cycle sublayout"             $ toSubl NextLayout)
-    , ("M-S-<Space>"            , addName "Reset layout"                $ setLayout $ XMonad.layoutHook conf)
-    --[ ("M-/"              , addName "Cycle all layouts"           $ sendMessage NextLayout)
-    -- doesn't work well with sublayouts, ("C-<Space>"              , addName "Cycle main layouts"          $ cycleThroughLayouts ["Full", "Tabs", "Flex Wide 3Col"])
-    --, ("M-C-/"            , addName "Cycle sublayout"             $ toSubl NextLayout)
-    --, ("M-S-/"            , addName "Reset layout"                $ setLayout $ XMonad.layoutHook conf)
-
-    -- refresh never seems to do anything
-    , ("M-S-C-<Space>"          , addName "Refresh (candidate for removal)" refresh)
-
-    , ("M-S-t"                  , addName "Tile floating w"             $ withFocused $ windows . W.sink)
-    , ("M-C-t"                  , addName "Tile all floating w"         $ sinkAll)
-    , ("M-y"                  , addName "Float tiled w"             $ withFocused toggleFloat)
-    --, ("M-m"                    , addName "Maximize toggle"             $ withFocused (sendMessage . maximizeRestore))
-    -- , ("M-f"                    , addName "Fullscreen toggle"           $ sendMessage $ XMonad.Layout.MultiToggle.Toggle FULL)
-    -- if following is run on a floating window, the sequence first tiles it. Not perfect, but works.
-    , ("M-f"                , addName "Fullscreen"                      $ sequence_ [ (withFocused $ windows . W.sink)
-                                                                        , (sendMessage $ XMonad.Layout.MultiToggle.Toggle FULL) ])
-    -- Fake fullscreen fullscreens into the window rect. The expand/shrink
-    -- is a hack to make the full screen paint into the rect properly.
-    -- The tryMsgR handles the BSP vs standard resizing functions.
-    -- 
-    , ("M-S-f"                  , addName "Fake fullscreen"             $ sequence_ [ (P.sendKey P.noModMask xK_F11)
-                                                                                    , (tryMsgR (ExpandTowards L) (Shrink))
-                                                                                    , (tryMsgR (ExpandTowards R) (Expand)) ])
-    -- , ("M-C-f"                  , addName "Fullscreen + bar toggle"     $ sendMessage $ XMonad.Layout.MultiToggle.Toggle FULLBAR)
-    , ("M-C-f"                  , addName "Toggle Struts"     $ sendMessage ToggleStruts)
-    -- , ("M4-t"                 , addName "Jump to full + tabs layout"  $ bindOn LD [("Tabs", sendMessage NextLayout), ("", sendMessage $ JumpToLayout "Tabs")])
-    ] ^++^
 
     -----------------------------------------------------------------------
     -- Resizing
     -----------------------------------------------------------------------
 
-    subKeys "Resize & Rotate"
+    subKeys "Resize"
 
     [
 
@@ -1314,23 +1320,24 @@ myKeys conf = let
     -- mnemonic: less than / greater than
     --, ("M4-<L>"       , addName "Expand (L on BSP)"     $ sequence_ [(tryMessage_ (ExpandTowards L) (Expand)), refresh])
 
-      ("M-<L>"                  , addName "Expand (L on BSP)"           $ tryMsgR (ExpandTowards L) (Shrink))
-    , ("M-<R>"                  , addName "Expand (R on BSP)"           $ tryMsgR (ExpandTowards R) (Expand))
-    , ("M-<U>"                  , addName "Expand (U on BSP)"           $ tryMsgR (ExpandTowards U) (MirrorShrink))
-    , ("M-<D>"                  , addName "Expand (D on BSP)"           $ tryMsgR (ExpandTowards D) (MirrorExpand))
+      ("C-<L>"                  , addName "Expand (L on BSP)"           $ tryMsgR (ExpandTowards L) (Shrink))
+    , ("C-<R>"                  , addName "Expand (R on BSP)"           $ tryMsgR (ExpandTowards R) (Expand))
+    , ("C-<U>"                  , addName "Expand (U on BSP)"           $ tryMsgR (ExpandTowards U) (MirrorShrink))
+    , ("C-<D>"                  , addName "Expand (D on BSP)"           $ tryMsgR (ExpandTowards D) (MirrorExpand))
 
-    , ("M-S-<L>"                , addName "Shrink (L on BSP)"           $ tryMsgR (ShrinkFrom R) (Shrink))
-    , ("M-S-<R>"                , addName "Shrink (R on BSP)"           $ tryMsgR (ShrinkFrom L) (Expand))
-    , ("M-S-<U>"                , addName "Shrink (U on BSP)"           $ tryMsgR (ShrinkFrom D) (MirrorShrink))
-    , ("M-S-<D>"                , addName "Shrink (D on BSP)"           $ tryMsgR (ShrinkFrom U) (MirrorExpand))
+    , ("C-S-<L>"                , addName "Shrink (L on BSP)"           $ tryMsgR (ShrinkFrom R) (Shrink))
+    , ("C-S-<R>"                , addName "Shrink (R on BSP)"           $ tryMsgR (ShrinkFrom L) (Expand))
+    , ("C-S-<U>"                , addName "Shrink (U on BSP)"           $ tryMsgR (ShrinkFrom D) (MirrorShrink))
+    , ("C-S-<D>"                , addName "Shrink (D on BSP)"           $ tryMsgR (ShrinkFrom U) (MirrorExpand))
 
-    , ("M-r"                    , addName "Reflect Layout"              $ sendMessage (XMonad.Layout.MultiToggle.Toggle REFLECTX))
-    , ("M-S-r"                  , addName "Mirror (BSP rotate)"         $ tryMsgR (Rotate) (XMonad.Layout.MultiToggle.Toggle MIRROR))
-    , ("M-S-C-m"                , addName "Mirror (always)"             $ sendMessage $ XMonad.Layout.MultiToggle.Toggle MIRROR)
-    , ("M4-r"                   , addName "BSP Rotate"                  $ sendMessage Rotate)
-    , ("M4-s"                   , addName "BSP Swap"                    $ sendMessage XMonad.Layout.BinarySpacePartition.Swap)
-    , ("M4-p"                   , addName "BSP Focus Parent"            $ sendMessage FocusParent)
-    , ("M4-n"                   , addName "BSP Select Node"             $ sendMessage SelectNode)
+  --, ("M-r"                    , addName "Mirror (BSP rotate)"         $ tryMsgR (Rotate) (XMonad.Layout.MultiToggle.Toggle MIRROR))
+  --, ("M-S-C-m"                , addName "Mirror (always)"             $ sendMessage $ XMonad.Layout.MultiToggle.Toggle MIRROR)
+  --, ("M4-r"                   , addName "BSP Rotate"                  $ sendMessage Rotate)
+
+-- TODO: the following are potentially useful but I won't know till I work with BSP further
+--    , ("M4-s"                   , addName "BSP Swap"                    $ sendMessage XMonad.Layout.BinarySpacePartition.Swap)
+--    , ("M4-p"                   , addName "BSP Focus Parent"            $ sendMessage FocusParent)
+--    , ("M4-n"                   , addName "BSP Select Node"             $ sendMessage SelectNode)
     --, ("M4-m"                   , addName "BSP Move Node"               $ sendMessage MoveNode)
 
     -- sublayout specific (unused)
@@ -1338,28 +1345,6 @@ myKeys conf = let
     --, ("M4-C-S-,"               , addName "toSubl Expand"               $ toSubl Expand)
     ] ^++^
 
-    -----------------------------------------------------------------------
-    -- Workspaces
-    -----------------------------------------------------------------------
-    -- original version was for dynamic workspaces
-    --    subKeys "{a,o,e,u,i,d,...} focus and move window between workspaces"
-    --    (  zipMod "View      ws" wsKeys [0..] "M-"      (withNthWorkspace W.greedyView)
-
-    subKeys "{a,o,e,u,i,d,...} focus and move window between workspaces" (
-
-    [
-    -- works      ("M4-u"                   , addName "Test"                        $ windows $ W.shift "wrk:2")
-    --     , ("M-S-C-g", workspacePrompt myXPConfig $ withAll' . W.shiftWin)
-    -- ("M4-u"                   , addName "Test"                        $ withAll' W.shift "wrk:2")
-    ]
-    ++ zipM "M-"                "View      ws"                          wsKeys [0..] (withNthWorkspace W.greedyView)
-    ++ zipM "M-S-"              "Move w to ws"                          wsKeys [0..] (withNthWorkspace W.shift)
-    ++ zipM "M-S-C-"            "Copy w to ws"                          wsKeys [0..] (withNthWorkspace copy)
---    ++ zipM "M-"                "View      ws"                          wsKeys [0..] (windows W.greedyView)
---    ++ zipM "M-S-"              "Move w to ws"                          wsKeys [0..] (withNthWorkspace W.shift)
---    ++ zipM "M-S-C-"            "Copy w to ws"                          wsKeys [0..] (withNthWorkspace copy)
-    ) ^++^
- 
     -----------------------------------------------------------------------
     -- Screens
     -----------------------------------------------------------------------
@@ -1373,87 +1358,11 @@ myKeys conf = let
 --    ++ zipMod "Swap workspace with and focus screen" screenKeys [0..] "M-C-"  (\s -> screenAction W.greedyView s >> screenAction W.view s)
 --    ) ^++^
 
-    -----------------------------------------------------------------------
-    -- Utility Bindings
-    -----------------------------------------------------------------------
-    subKeys "Utility Bindings"
-    [
-    -- not working due to timing?
---      ("M4-a"                   , addName "Copy browser address"        $ sequence_ [ (P.sendKey controlMask xK_l)
---                                                                                    , (P.sendKey controlMask xK_c)
---                                                                                    , unsafeWithSelection "notify-send"])
-      ("M4-a"                   , addName "Notify w current X selection" $  unsafeWithSelection "notify-send")
-    , ("M4-7"                   , addName "TESTING"                      $  runInTerm "-name glances" "glances" )
-    , ("M4-u"                   , addName "Copy current browser URL"     $  spawn "url-actions")
-    , ("M4-d"                   , addName "Display launcher"             $  spawn "displayctl menu")
-    , ("M4-w"                   , addName "Networking launcher"          $  spawn "nmcli_dmenu")
-    , ("M4-o"                   , addName "On-screen keys"               $  spawn "killall screenkey &>/dev/null || screenkey --no-systray")
-    ] ^++^
-
-    -----------------------------------------------------------------------
-    -- Applications
-    -----------------------------------------------------------------------
-    --   ("C-<Return>"  , addName "Terminal"   $ spawn myTerminal)
-    -- , ("C-S-<Return>"  , addName "Console Terminal"   $ runOrCopy myConsole (title =? "console"))
-    -- , ("C-\\"  , addName "Browser"      $ spawn myBrowser)
-    subKeys "Applications & Utilities"
-    [ ("M4-<Space>"             , addName "Terminal"                    $ spawn myLauncher)
-    , ("M-<Return>"             , addName "Terminal"                    $ spawn myTerminal)
-    , ("M-\\"                   , addName "Browser"                     $ spawn myBrowser)
-    , ("C-<Return>"             , addName "Terminal"                    $ spawn myTerminal)
-    , ("C-\\"                   , addName "Browser"                     $ spawn myBrowser)
-    , ("M-g"                    , addName "NSP Hangouts"                $ bindOn WS [(wsWrk, namedScratchpadAction scratchpads "hangoutsWork"),
-                                                                                     ("", namedScratchpadAction scratchpads "hangoutsPersonal")])
-    , ("M-t"                    , addName "NSP Trello"                  $ bindOn WS [(wsWrk, namedScratchpadAction scratchpads "trelloWork"),
-                                                                                     ("", namedScratchpadAction scratchpads "trello")])
---    , ("M4-v"                   , addName "NSP AV Music"                $ bindOn WS [("av", namedScratchpadAction scratchpads "googleMusic"),
---                                                                                     ("", return ())])
-    , ("M4-v"                   , addName "NSP AV Music"                $ namedScratchpadAction scratchpads "googleMusic")
-    , ("M4-c"                   , addName "NSP Console"                 $ namedScratchpadAction scratchpads "console")
-    , ("M4-p"                   , addName "NSP Console"                 $ namedScratchpadAction scratchpads "plex")
-    ] ^++^
-
-    -----------------------------------------------------------------------
-    -- XMonad Controls
-    -----------------------------------------------------------------------
-    subKeys "XMonad Controls"
-    [ ("M-q"                    , addName "Restart XMonad"              $ spawn "xmonad --restart")
-    , ("M-C-q"                  , addName "Rebuild & restart XMonad"    $ spawn "xmonad --recompile && xmonad --restart")
-    , ("M-S-q"                  , addName "Quit XMonad"                 $ confirmPrompt hotPromptTheme "Quit XMonad" $ io (exitWith ExitSuccess))
-    --, ("M4-l"                 , addName "Lock screen"                 $ spawn "$HOME/bin/wm/lockscreen")
-    , ("M4-l"                   , addName "Lock screen"                 $ spawn "xset s activate")
-    ] ^++^
-
-    -----------------------------------------------------------------------
-    -- Multimedia & System Keys
-    -----------------------------------------------------------------------
-    subKeys "Multimedia & System Keys"
-    [("<XF86Sleep>"             , addName "System sleep"                $ spawn "notify-send system sleep")
-    ,("<XF86PowerOff>"          , addName "System power off"            $ spawn "notify-send system off")
-    ,("S-<XF86PowerOff>"        , addName "System reboot"               $ spawn "notify-send system reboot")
-    ,("<XF86ScreenSaver>"       , addName "Lock screen"                 $ spawn "notify-send displays lock")
-    ,("S-<XF86Display>"         , addName "Span display mode"           $ spawn "$HOME/bin/wm/displayctl span")
-    ,("C-<XF86Display>"         , addName "Span display mode"           $ spawn "$HOME/bin/wm/displayctl toggle")
-    ,("M-<XF86Display>"         , addName "Mirror display mode"         $ spawn "$HOME/bin/wm/displayctl auto")
-    ,("<XF86Launch1>"           , addName "Bluetooth toggle"            $ spawn "notify-send wireless bluetooth toggle")
-    ,("<XF86TouchpadOn>"        , addName "Trackpad toggle"             $ spawn "notify-send trackpad toggle")
-    ,("<Print>"                 , addName "Screendraw start/stop"       $ spawn "notify-send screendraw")
-    ,("S-<Print>"               , addName "Screendraw force stop"       $ spawn "notify-send screendraw finish")
-    ,("M-<Print>"               , addName "Screendraw cancel"           $ spawn "notify-send screendraw cancel")
-    ,("<XF86RotateWindows>"     , addName "Screendraw clear"            $ spawn "notify-send screendraw clear")
-    ] ^++^
-
     subKeys "Media Controls"
-    [--("<XF86AudioRaiseVolume>"  , addName "Volume Up"                   $ raiseVolume 5 >> return ())
-    --,("<XF86AudioLowerVolume>"  , addName "Volume Down"                 $ lowerVolume 5 >> return ())
-    --,("<XF86AudioMute>"         , addName "Volume Mute"                 $ toggleMute >> return ())
-    --,("M4-m"         , addName "Volume Mute"                 $ toggleMute >> return ())
+    [
     ("<XF86AudioMicMute>"      , addName "Mic Mute"                    $ spawn "notify-send mic mute")
     ]
     
-
-myModMask = mod1Mask -- alt key
-mySecondaryModMask = mod4Mask -- super key
 
 -- Mouse bindings: default actions bound to mouse events
 -- Includes window snapping on move/resize using X.A.FloatSnap
@@ -1480,11 +1389,11 @@ myMouseBindings (XConfig {XMonad.modMask = myModMask}) = M.fromList $
       >> ifClick (snapMagicResize [R,D] (Just 50) (Just 50) w)
       >> windows W.shiftMaster ))
 
-    , ((mySecondaryModMask,      button4), (\w -> focus w
-      >> prevNonEmptyWS))
-
-    , ((mySecondaryModMask,      button5), (\w -> focus w
-      >> nextNonEmptyWS))
+--    , ((mySecondaryModMask,      button4), (\w -> focus w
+--      >> prevNonEmptyWS))
+--
+--    , ((mySecondaryModMask,      button5), (\w -> focus w
+--      >> nextNonEmptyWS))
 
     ]
 
@@ -1534,8 +1443,8 @@ myLogHook h = do
 
         { ppCurrent             = xmobarColor active "" . wrap "[" "]"
         , ppTitle               = xmobarColor active "" . shorten 50
-        , ppVisible             = wrap "(" ")"
-        , ppUrgent              = xmobarColor red "" . wrap " " " "
+        , ppVisible             = xmobarColor base0  "" . wrap "(" ")"
+        , ppUrgent              = xmobarColor red    "" . wrap " " " "
         , ppHidden              = check
         , ppHiddenNoWindows     = const ""
         , ppSep                 = xmobarColor red blue "  :  "

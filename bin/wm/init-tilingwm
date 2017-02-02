@@ -117,7 +117,12 @@ spacefm -d &
 
 
 # ----------------------------------------------------------------------
-#  run nvidia settings to load preferences
+# run nvidia settings to load preferences
 
 nvidia-settings --load-config-only &
+
+# ----------------------------------------------------------------------
+# configure keyboard
+
+$HOME/bin/wm/init-keyboard
 

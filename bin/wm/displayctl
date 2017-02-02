@@ -143,7 +143,10 @@ execute () {
 
     # sleep in specific cases to keep x from crashing when we run subsequent commands
     case $mode in
+        #span*)  sleep 3 ;;
+        #mirror) sleep 4 ;;
         span*)  sleep 3 ;;
+        ex*)    sleep 3 ;;
         mirror) sleep 4 ;;
     esac
 
