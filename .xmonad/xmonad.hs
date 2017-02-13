@@ -343,19 +343,20 @@ projects =
 
     , Project   { projectName       = wsDMO
                 , projectDirectory  = "~/"
-                , projectStartHook  = Just $ do spawn "/usr/lib/xscreensaver/binaryring"
-                                                spawn "/usr/lib/xscreensaver/cubicgrid"
-                                                spawn "/usr/lib/xscreensaver/surfaces"
-                                                runInTerm "-name glances" "glances"
+                -- , projectStartHook  = Just $ do spawn "/usr/lib/xscreensaver/binaryring"
+                , projectStartHook  = Just $ do spawn "/usr/lib/xscreensaver/spheremonics"
                                                 runInTerm "-name top" "top"
                                                 runInTerm "-name top" "htop"
+                                                runInTerm "-name glances" "glances"
+                                                spawn "/usr/lib/xscreensaver/cubicgrid"
+                                                spawn "/usr/lib/xscreensaver/surfaces"
                 }
 
     , Project   { projectName       = wsVIX
                 , projectDirectory  = "~/.xmonad"
-                , projectStartHook  = Just $ do spawnOn wsSYS myTerminal
-                                                spawnOn wsSYS myTerminal
-                                                spawnOn wsSYS myTerminal
+                , projectStartHook  = Just $ do runInTerm "-name vix" "vim ~/.xmonad/xmonad.hs"
+                                                spawnOn wsVIX myTerminal
+                                                spawnOn wsVIX myTerminal
                 }
 
     , Project   { projectName       = wsMON
@@ -376,13 +377,16 @@ projects =
 
     , Project   { projectName       = wsTMP
                 , projectDirectory  = "~/"
-                , projectStartHook  = Just $ do spawn $ myBrowser ++ " https://mail.google.com/mail/u/0/#inbox/1599e6883149eeac"
+                -- , projectStartHook  = Just $ do spawn $ myBrowser ++ " https://mail.google.com/mail/u/0/#inbox/1599e6883149eeac"
+                , projectStartHook  = Just $ do return ()
                 }
     ]
 
 ------------------------------------------------------------------------}}}
 -- Applications                                                         {{{
 ---------------------------------------------------------------------------
+
+-- | Uses supplied function to decide which action to run depending on current workspace name.
 
 --myTerminal          = "terminator"
 --myTerminalClass     = "Terminator"
@@ -412,7 +416,8 @@ myLauncher          = "rofi -matching fuzzy -show run"
 -- This system utilizes:
 -- * my workspace aware browser script
 -- * X.U.NamedScratchPads
--- * bindOn via X.A.PerWorkspaceKeys
+-- * bindOn via X.A.PerWorkspaceKeys (NO... now using ConditionalKeys custom module)
+-- * bindOn via X.A.ConditionalKeys
 
 -- TODO: change this to a lookup for all workspaces
 hangoutsCommand     = myBrowser ++ " --app-id=knipolnnllmklapflnccelgolnpehhpl"
@@ -456,6 +461,7 @@ scratchpads =
     ,   (NS "googleMusic"  googleMusicCommand isGoogleMusic nonFloating)
     ,   (NS "plex"  plexCommand isPlex defaultFloating)
     ,   (NS "console"  myConsole isConsole nonFloating)
+    ,   (NS "xawtv" "xawtv" (resource =? "xawtv") (customFloating $ W.RationalRect (2/3) (1/6) (1/5) (1/3)) )
     ] 
 
 ------------------------------------------------------------------------}}}
@@ -592,7 +598,7 @@ barFull = avoidStruts $ Simplest
 -- cf http://xmonad.org/xmonad-docs/xmonad-contrib/src/XMonad-Config-Droundy.html
 
 myLayoutHook = showWorkspaceName
-             $ onWorkspace ":6" floatWorkSpace
+             -- $ onWorkspace "AV" floatWorkSpace
              $ fullscreenFloat -- fixes floating windows going full screen, while retaining "bounded" fullscreen
              $ fullScreenToggle
              $ fullBarToggle
@@ -604,7 +610,7 @@ myLayoutHook = showWorkspaceName
 --    testTall = Tall 1 (1/50) (2/3)
 --    myTall = subLayout [] Simplest $ trackFloating (Tall 1 (1/20) (1/2))
 
-    floatWorkSpace      = simplestFloat
+    -- floatWorkSpace      = simplestFloat
     fullBarToggle       = mkToggle (single FULLBAR)
     fullScreenToggle    = mkToggle (single FULL)
     mirrorToggle        = mkToggle (single MIRROR)
@@ -778,7 +784,8 @@ myLayoutHook = showWorkspaceName
               $ windowNavigation
               $ addTopBar
               $ addTabs shrinkText myTabTheme
-              $ subLayout [] (Simplest ||| (mySpacing $ Accordion))
+              -- $ subLayout [] (Simplest ||| (mySpacing $ Accordion))
+              $ subLayout [] (Simplest ||| Accordion)
               $ ifWider smallMonResWidth wideLayouts standardLayouts
               where
                   wideLayouts = myGaps $ mySpacing
@@ -1193,13 +1200,19 @@ myKeys conf = let
     -- Actions
     -----------------------------------------------------------------------
     subKeys "Actions"
-    [ ("M-a"                    , addName "Notify w current X selection"    $  unsafeWithSelection "notify-send")
-  --, ("M-7"                    , addName "TESTING"                         $  runInTerm "-name glances" "glances" )
-    , ("M-u"                    , addName "Copy current browser URL"        $  spawn "url-actions")
-    , ("M-o"                    , addName "Display (Output) launcher"       $  spawn "displayctl menu")
-    , ("M-i"                    , addName "Network (Interface) launcher"    $  spawn "nmcli_dmenu")
-    , ("M-/"                    , addName "On-screen keys"                  $  spawn "killall screenkey &>/dev/null || screenkey --no-systray")
-    , ("M-S-/"                  , addName "On-screen keys settings"         $  spawn "screenkey --show-settings")
+    [ ("M-a"                    , addName "Notify w current X selection"    $ unsafeWithSelection "notify-send")
+  --, ("M-7"                    , addName "TESTING"                         $ runInTerm "-name glances" "glances" )
+    , ("M-u"                    , addName "Copy current browser URL"        $ spawn "url-actions")
+    , ("M-o"                    , addName "Display (output) launcher"       $ spawn "displayctl menu")
+    , ("M-<XF86Display>"        , addName "Display - force internal"        $ spawn "displayctl internal")
+    , ("S-<XF86Display>"        , addName "Display - force internal"        $ spawn "displayctl internal")
+    , ("M-i"                    , addName "Network (Interface) launcher"    $ spawn "nmcli_dmenu")
+    , ("M-/"                    , addName "On-screen keys"                  $ spawn "killall screenkey &>/dev/null || screenkey --no-systray")
+    , ("M-S-/"                  , addName "On-screen keys settings"         $ spawn "screenkey --show-settings")
+    , ("M1-p"                   , addName "Capture screen"                  $ spawn "screenshot" )
+    , ("M1-S-p"                 , addName "Capture screen - area select"    $ spawn "screenshot area" )
+    , ("M1-r"                   , addName "Record screen"                   $ spawn "screencast" )
+    , ("M1-S-r"                 , addName "Record screen - area select"     $ spawn "screencast area" )
     ] ^++^
 
     -----------------------------------------------------------------------
@@ -1215,6 +1228,7 @@ myKeys conf = let
                                                                               ("", namedScratchpadAction scratchpads "trello")])
     , ("M-m"                    , addName "NSP Music"                       $ namedScratchpadAction scratchpads "googleMusic")
     , ("M-v"                    , addName "NSP Video"                       $ namedScratchpadAction scratchpads "plex")
+    , ("M1-x"                   , addName "NSP Xawtv"                       $ namedScratchpadAction scratchpads "xawtv")
     , ("M-n"                    , addName "NSP Console"                     $ namedScratchpadAction scratchpads "console")
     , ("M-s s"                  , addName "Cancel submap"                   $ return ())
     , ("M-s M-s"                , addName "Cancel submap"                   $ return ())
@@ -1242,8 +1256,8 @@ myKeys conf = let
     , ("M-z u"                  , addName "Focus urgent"                    focusUrgent)
     , ("M-z m"                  , addName "Focus master"                    $ windows W.focusMaster)
 
-    , ("M-<Tab>"              	, addName "Focus down"                      $ windows W.focusDown)
-    , ("M-S-<Tab>"              , addName "Focus up"                        $ windows W.focusUp)
+    --, ("M-<Tab>"              	, addName "Focus down"                      $ windows W.focusDown)
+    --, ("M-S-<Tab>"              , addName "Focus up"                        $ windows W.focusUp)
 
     , ("M-'"                    , addName "Cycle current tabs D"            $ bindOn LD [("Tabs", windows W.focusDown), ("", onGroup W.focusDown')])
     , ("M-;"                    , addName "Cycle current tabs U"            $ bindOn LD [("Tabs", windows W.focusUp), ("", onGroup W.focusUp')])
@@ -1276,10 +1290,10 @@ myKeys conf = let
     (
     [ ("M-w"                    , addName "Switch to Project"           $ switchProjectPrompt warmPromptTheme)
     , ("M-S-w"                  , addName "Shift to Project"            $ shiftToProjectPrompt warmPromptTheme)
-    , ("M--"                    , addName "Prev non-empty workspace"    $ prevNonEmptyWS)
-    , ("M-="                    , addName "Next non-empty workspace"    $ nextNonEmptyWS)
-    , ("M-S--"                  , addName "Prev workspace"              $ prevWS)
-    , ("M-S-="                  , addName "Next workspace"              $ nextWS)
+    , ("M-<Escape>"             , addName "Next non-empty workspace"    $ nextNonEmptyWS)
+    , ("M-S-<Escape>"           , addName "Prev non-empty workspace"    $ prevNonEmptyWS)
+    , ("M-`"                    , addName "Next non-empty workspace"    $ nextNonEmptyWS)
+    , ("M-S-`"                  , addName "Prev non-empty workspace"    $ prevNonEmptyWS)
     , ("M-a"                    , addName "Toggle last workspace"       $ toggleWS' ["NSP"])
     ]
     ++ zipM "M-"                "View      ws"                          wsKeys [0..] (withNthWorkspace W.greedyView)
@@ -1298,14 +1312,8 @@ myKeys conf = let
 
     subKeys "Layout Management"
 
-    [ ("M-<Escape>"             , addName "Cycle all layouts"               $ sendMessage NextLayout)
-    , ("M-`"                    , addName "Cycle all layouts"               $ sendMessage NextLayout)
-    , ("M-<Tab>"                , addName "Cycle all layouts"               $ sendMessage NextLayout)
-    , ("M-C-<Escape>"           , addName "Cycle sublayout"                 $ toSubl NextLayout)
-    , ("M-C-`"                  , addName "Cycle sublayout"                 $ toSubl NextLayout)
+    [ ("M-<Tab>"                , addName "Cycle all layouts"               $ sendMessage NextLayout)
     , ("M-C-<Tab>"              , addName "Cycle sublayout"                 $ toSubl NextLayout)
-    , ("M-S-<Escape>"           , addName "Reset layout"                    $ setLayout $ XMonad.layoutHook conf)
-    , ("M-S-`"                  , addName "Reset layout"                    $ setLayout $ XMonad.layoutHook conf)
     , ("M-S-<Tab>"              , addName "Reset layout"                    $ setLayout $ XMonad.layoutHook conf)
 
     , ("M-y"                    , addName "Float tiled w"                   $ withFocused toggleFloat)

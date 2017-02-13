@@ -49,7 +49,7 @@ case $CURRENTWS in
 
 	# list of workspaces that get their own browser profiles
 	# (work browser, assigned own debug port)
-	2|wrk|work) CURRENTWS=wrk; PORT=9223; ;;
+	2|wrk|work|cc) CURRENTWS=wrk; PORT=9223; ;;
 
 	# list of workspaces that get their own browser profiles
 	6|av|null) ;;

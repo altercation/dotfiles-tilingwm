@@ -168,23 +168,27 @@ URxvt.font: xft:Input Mono Compressed:size=12
 !!URxvt.shading: 20
 
 !! source code has default wide letter spacing (may be correct, though need to test with line drawing characters)
-!! URxvt.letterSpace: -1
-!! URxvt.font: xft:Source Code Pro Medium:size=11
+!!URxvt.letterSpace: -1
+!!URxvt.font: xft:Source Code Pro Medium:size=11
 
-URxvt.perl-ext-common: font-size
+URxvt.perl-ext-common: resize-font
+URxvt.resize-font.smaller: C-M-Down
+URxvt.resize-font.bigger: C-M-Up
+URxvt.resize-font.reset: C-M-0
+URxvt.resize-font.show: C-M-question
 
-URxvt.keysym.C-Up:     perl:font-size:increase
-URxvt.keysym.C-Down:   perl:font-size:decrease
-URxvt.keysym.C-S-Up:   perl:font-size:incglobal
-URxvt.keysym.C-S-Down: perl:font-size:decglobal
-URxvt.font-size.step: 3
-
-URxvt.keysym.C-1: command:    \033]710;xft:Input Mono Compressed:size=12,xft:DejaVu Sans Mono:size=12\007\
+URxvt.keysym.M-0: command:    \033]710;xft:Input Mono Compressed:size=12,xft:DejaVu Sans Mono:size=12\007\
                               \033]711;xft:Input Mono Compressed:size=12,xft:DejaVu Sans Mono:size=12\007
-URxvt.keysym.C-2: command:    \033]710;xft:Input Mono Compressed:size=17,xft:DejaVu Sans Mono:size=17\007\
-                              \033]711;xft:Input Mono Compressed:size=17,xft:DejaVu Sans Mono:size=17\007
-URxvt.keysym.C-3: command:    \033]710;xft:Input Mono Compressed:size=27,xft:DejaVu Sans Mono:size=27\007\
-                              \033]711;xft:Input Mono Compressed:size=27,xft:DejaVu Sans Mono:size=27\007
+URxvt.keysym.M-1: command:    \033]710;xft:Input Mono Compressed:size=12,xft:DejaVu Sans Mono:size=12\007\
+                              \033]711;xft:Input Mono Compressed:size=12,xft:DejaVu Sans Mono:size=12\007
+URxvt.keysym.M-2: command:    \033]710;xft:Input Mono Compressed:size=18,xft:DejaVu Sans Mono:size=18\007\
+                              \033]711;xft:Input Mono Compressed:size=18,xft:DejaVu Sans Mono:size=18\007
+URxvt.keysym.M-3: command:    \033]710;xft:Input Mono Compressed:size=24,xft:DejaVu Sans Mono:size=36\007\
+                              \033]711;xft:Input Mono Compressed:size=24,xft:DejaVu Sans Mono:size=36\007
+URxvt.keysym.M-4: command:    \033]710;xft:Input Mono Compressed:size=48,xft:DejaVu Sans Mono:size=72\007\
+                              \033]711;xft:Input Mono Compressed:size=48,xft:DejaVu Sans Mono:size=72\007
+URxvt.keysym.M-5: command:    \033]710;xft:Input Mono Compressed:size=72,xft:DejaVu Sans Mono:size=96\007\
+                              \033]711;xft:Input Mono Compressed:size=72,xft:DejaVu Sans Mono:size=96\007
 
 URxvt*saveLines: 12000
 URxvt*scrollstyle:plain
@@ -198,7 +202,8 @@ URxvt*scrollBar_right: true
 !!URxvt*scrollColor: #586e75
 URxvt*scrollColor: S_base02
 !! URxvt.scrollstyle: rxvt
-URxvt.urgentOnBell: true
+URxvt*urgentOnBell: true
+URxvt*termName: xterm-256color
 
 !! scroll back in things like 'less'
 !!URxvt.secondaryScreen: 1

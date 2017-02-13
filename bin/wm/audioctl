@@ -19,6 +19,7 @@ CMDBASE="xrandr -d $DISPLAY"
 main () {
     case ${1:-} in
         vol*) shift; volume $*  ;;
+        mic*) shift; mic $*     ;;
         re*)  rescan            ;;
     esac
 }
@@ -34,6 +35,16 @@ volume () {
             up)     pactl set-sink-volume $i +5%  &>/dev/null || :   ;;
             down)   pactl set-sink-volume $i -5%  &>/dev/null || :   ;;
             mute)   pactl set-sink-mute $i toggle &>/dev/null || :   ;;
+        esac
+    done
+}
+
+mic () {
+    logger ">>>>>>>>>>>> here in mic with $1"
+    for i in $(seq 0 9)
+    do
+        case ${1:-} in
+            mute)   pactl set-source-mute $i toggle &>/dev/null || :   ;;
         esac
     done
 }

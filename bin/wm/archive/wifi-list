@@ -1,0 +1,1 @@
+script -q -c "nmcli device wifi" | out2html -p | rofi -dmenu -markup-rows

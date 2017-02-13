@@ -85,10 +85,11 @@ Config
             ] 10
         , Run Com "status-net" [] "net" 10
         , Run Com "status-keyboard" [] "kb" 10
+        , Run Com "screencast" ["status"] "screencast" 10
         , Run StdinReader]
         , sepChar            = "%"
         , alignSep           = "}{"
-        , template           = " %StdinReader% }{ %cpu%%memory%   %net%   %default:Master%   %battery%   %date%   %KBFI%   %kb%  "
+        , template           = " %StdinReader% }{ %screencast% %cpu%%memory%   %net%   %default:Master%   %battery%   %date%   %KBFI%   %kb%  "
         --, template           = "%StdinReader% }{ %cpu%%memory%   %statusnet% %wlp4s0wi%%enp0s31f6%   %default:Master%   %battery%   %date%   %KBFI%            "
         --, template           = "%StdinReader% }{ %wlp4s0wi% %default:Master% %multicpu% %cpufreq% %memory% %battery% %date% %KBFI%            "
     }

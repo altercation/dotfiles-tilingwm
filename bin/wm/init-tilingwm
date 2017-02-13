@@ -124,5 +124,7 @@ nvidia-settings --load-config-only &
 # ----------------------------------------------------------------------
 # configure keyboard
 
+# following systemctl start shouldn't be necessary
+systemctl --user restart xcape
 $HOME/bin/wm/init-keyboard
 
