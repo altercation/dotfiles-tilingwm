@@ -1,28 +1,60 @@
 #!/bin/sh
 
+# ----------------------------------------------------------------------
+# audioctl
+#
+# Control basic audio functions such as volume up/down, mute, mic mute
+# and a reset of pulseaudio (rescan) useful when restoring from sleep.
+# ----------------------------------------------------------------------
+
 set -eu
 
 # ----------------------------------------------------------------------
-# General
+# Standard Boilerplate
 # ----------------------------------------------------------------------
+# I use this standard boilerplate in multiple scripts where I might
+# need to re-run as the X user. Some items are not necessary in all
+# scripts but I'd rather keep it consistent. In general, the *ctl
+# scripts (audioctl, displayctl) require this as they may be called
+# by udev or acpi and thus by root.
 
+# rerun as X user if running as root
+XUSER=$(ps -C Xorg -C X -ouser=)
+[ "$(id -un)" = root ] && [ "$XUSER" != root ] && exec su -c "$0 $*" "$XUSER"
+
+# grab X user id if necessary
+XUSERID=$(id -u $XUSER)
+
+# key environment variables
+export DISPLAY=":0"
+export XAUTHORITY=$HOME/.Xauthority
+# note that the dbus env is definitely not required for this pulse
+# audio script but retained here for reference
+export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$XUSERID/bus"
+
+# script values and config file if we need it
 SCRIPTNAME=$(basename $0)
 SCRIPTDIR=$(dirname $(readlink -f $0))
-# TODO: better way to grab username
-USERNAME=$(echo $SCRIPTDIR | sed "s_/home/\([^/]\+\).*_\1_")
-_UID="$(id -u $USERNAME)"
-export DISPLAY=":0"
-export XAUTHORITY=/home/$USERNAME/.Xauthority
-CONFIG=/home/$USERNAME/.config/$SCRIPTNAME
-CMDBASE="xrandr -d $DISPLAY"
+CONFIG=/home/$XUSER/.config/$SCRIPTNAME
+
+# ----------------------------------------------------------------------
+# Main
+# ----------------------------------------------------------------------
 
 main () {
     case ${1:-} in
-        vol*) shift; volume $*  ;;
+        vol*) logger "AT VOLUME"; shift; volume $*  ;;
         mic*) shift; mic $*     ;;
         re*)  rescan            ;;
     esac
 }
+
+# ----------------------------------------------------------------------
+# Functions
+# ----------------------------------------------------------------------
+# I am brute forcing the volume and mute commands across 10 possible
+# pulseaudio sinks. This is kind of a heavy handed way to deal with it
+# but it's simple and does the job.
 
 rescan () {
     pacmd unload-module module-udev-detect && pacmd load-module module-udev-detect
@@ -40,7 +72,6 @@ volume () {
 }
 
 mic () {
-    logger ">>>>>>>>>>>> here in mic with $1"
     for i in $(seq 0 9)
     do
         case ${1:-} in
