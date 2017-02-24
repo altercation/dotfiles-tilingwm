@@ -28,9 +28,7 @@ XUSERID=$(id -u $XUSER)
 # key environment variables
 export DISPLAY=":0"
 export XAUTHORITY=$HOME/.Xauthority
-# note that the dbus env is definitely not required for this pulse
-# audio script but retained here for reference
-export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$XUSERID/bus"
+export PULSE_RUNTIME_PATH="/run/user/${XUSERID}/pulse/"
 
 # script values and config file if we need it
 SCRIPTNAME=$(basename $0)
@@ -43,7 +41,7 @@ CONFIG=/home/$XUSER/.config/$SCRIPTNAME
 
 main () {
     case ${1:-} in
-        vol*) logger "AT VOLUME"; shift; volume $*  ;;
+        vol*) shift; volume $*  ;;
         mic*) shift; mic $*     ;;
         re*)  rescan            ;;
     esac
