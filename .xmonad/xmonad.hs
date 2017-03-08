@@ -312,6 +312,7 @@ wsBSA   = "BSA"
 wsCOM   = "COM"
 wsDOM   = "DOM"
 wsDMO   = "DMO"
+wsFLOAT = "FLT"
 wsGEN   = "GEN"
 wsGCC   = "GCC"
 wsMON   = "MON"
@@ -322,9 +323,11 @@ wsSYS   = "SYS"
 wsTMP   = "TMP"
 wsVIX   = "VIX"
 wsWRK   = "WRK"
+wsWRK2  = "WRK:2"
+wsGGC   = "GGC"
 
 -- myWorkspaces = map show [1..9]
-myWorkspaces = [wsGEN, wsWRK, wsCOM, wsSYS, wsMON, wsAV, wsRW, wsTMP]
+myWorkspaces = [wsGEN, wsWRK, wsWRK2, wsSYS, wsMON, wsFLOAT, wsRW, wsTMP]
 
 projects :: [Project]
 projects =
@@ -392,11 +395,12 @@ projects =
 --myTerminalClass     = "Terminator"
 myTerminal          = "urxvt"
 myAltTerminal       = "cool-retro-term"
-myBrowser           = "$HOME/bin/wm/browser" -- chrome with WS profile dirs
+myBrowser           = "browser" -- chrome with WS profile dirs
 myBrowserClass      = "Google-chrome-beta"
-myStatusBar         = "xmobar -x0 $HOME/.xmonad/xmobarrc"
+myStatusBar         = "xmobar -x0 /home/ethan/.xmonad/xmobar.conf"
 --myLauncher          = "dmenu_run"
-myLauncher          = "rofi -matching fuzzy -show run"
+--myLauncher          = "rofi -matching fuzzy -show run"
+myLauncher          = "rofi -matching fuzzy -modi combi -show combi -combi-modi run,drun"
 
 
 -- I'm using a custom browser launching script (see myBrowser above) that
@@ -433,11 +437,14 @@ isWorkHangouts      = isHangoutsFor "eschoonover"
 -- TODO: change this to a lookup for all workspaces
 trelloCommand       = "dex $HOME/.local/share/applications/Trello.desktop"
 trelloWorkCommand   = "dex $HOME/.local/share/applications/TrelloWork.desktop"
+trelloWork2Command  = "dex $HOME/.local/share/applications/TrelloWork2.desktop"
 trelloInfix         = "Trello"
 trelloResource      = "crx_jijnmpkkfkjaihbhffejemnpbbglahim"
 trelloWorkResource  = "crx_fkbbihpadkgbnhphndjgblgelahbiede"
+trelloWork2Resource = "crx_bgemgoheeofmogacohnlmpldjlogegoh"
 isTrello            = (resource =? trelloResource)
 isTrelloWork        = (resource =? trelloWorkResource)
+isTrelloWork2       = (resource =? trelloWork2Resource)
 
 googleMusicCommand  = "dex $HOME/.local/share/applications/Music.desktop"
 googleMusicInfix    = "Google Play Music"
@@ -598,7 +605,7 @@ barFull = avoidStruts $ Simplest
 -- cf http://xmonad.org/xmonad-docs/xmonad-contrib/src/XMonad-Config-Droundy.html
 
 myLayoutHook = showWorkspaceName
-             -- $ onWorkspace "AV" floatWorkSpace
+             $ onWorkspace wsFLOAT floatWorkSpace
              $ fullscreenFloat -- fixes floating windows going full screen, while retaining "bounded" fullscreen
              $ fullScreenToggle
              $ fullBarToggle
@@ -610,7 +617,7 @@ myLayoutHook = showWorkspaceName
 --    testTall = Tall 1 (1/50) (2/3)
 --    myTall = subLayout [] Simplest $ trackFloating (Tall 1 (1/20) (1/2))
 
-    -- floatWorkSpace      = simplestFloat
+    floatWorkSpace      = simplestFloat
     fullBarToggle       = mkToggle (single FULLBAR)
     fullScreenToggle    = mkToggle (single FULL)
     mirrorToggle        = mkToggle (single MIRROR)
@@ -1202,7 +1209,7 @@ myKeys conf = let
     subKeys "Actions"
     [ ("M-a"                    , addName "Notify w current X selection"    $ unsafeWithSelection "notify-send")
   --, ("M-7"                    , addName "TESTING"                         $ runInTerm "-name glances" "glances" )
-    , ("M-u"                    , addName "Copy current browser URL"        $ spawn "url-actions")
+    , ("M-u"                    , addName "Copy current browser URL"        $ spawn "with-url copy")
     , ("M-o"                    , addName "Display (output) launcher"       $ spawn "displayctl menu")
     , ("M-<XF86Display>"        , addName "Display - force internal"        $ spawn "displayctl internal")
     , ("S-<XF86Display>"        , addName "Display - force internal"        $ spawn "displayctl internal")
@@ -1259,8 +1266,10 @@ myKeys conf = let
     --, ("M-<Tab>"              	, addName "Focus down"                      $ windows W.focusDown)
     --, ("M-S-<Tab>"              , addName "Focus up"                        $ windows W.focusUp)
 
-    , ("M-'"                    , addName "Cycle current tabs D"            $ bindOn LD [("Tabs", windows W.focusDown), ("", onGroup W.focusDown')])
-    , ("M-;"                    , addName "Cycle current tabs U"            $ bindOn LD [("Tabs", windows W.focusUp), ("", onGroup W.focusUp')])
+    , ("M-'"                    , addName "Navigate tabs D"                 $ bindOn LD [("Tabs", windows W.focusDown), ("", onGroup W.focusDown')])
+    , ("M-;"                    , addName "Navigate tabs U"                 $ bindOn LD [("Tabs", windows W.focusUp), ("", onGroup W.focusUp')])
+    , ("C-'"                    , addName "Swap tab D"                      $ windows W.swapDown)
+    , ("C-;"                    , addName "Swap tab U"                      $ windows W.swapUp)
 
     -- ComboP specific (can remove after demo)
     , ("M-C-S-m"                , addName "Combo swap"                      $ sendMessage $ SwapWindow)
@@ -1319,8 +1328,12 @@ myKeys conf = let
     , ("M-y"                    , addName "Float tiled w"                   $ withFocused toggleFloat)
     , ("M-S-y"                  , addName "Tile all floating w"             $ sinkAll)
 
+    , ("M-,"                    , addName "Decrease master windows"         $ sendMessage (IncMasterN (-1)))
+    , ("M-."                    , addName "Increase master windows"         $ sendMessage (IncMasterN 1))
+
     , ("M-r"                    , addName "Reflect/Rotate"              $ tryMsgR (Rotate) (XMonad.Layout.MultiToggle.Toggle REFLECTX))
     , ("M-S-r"                  , addName "Force Reflect (even on BSP)" $ sendMessage (XMonad.Layout.MultiToggle.Toggle REFLECTX))
+
 
     -- If following is run on a floating window, the sequence first tiles it.
     -- Not perfect, but works.
@@ -1333,6 +1346,10 @@ myKeys conf = let
     , ("M-S-f"                  , addName "Fake fullscreen"             $ sequence_ [ (P.sendKey P.noModMask xK_F11)
                                                                                     , (tryMsgR (ExpandTowards L) (Shrink))
                                                                                     , (tryMsgR (ExpandTowards R) (Expand)) ])
+    , ("C-S-h"                  , addName "Ctrl-h passthrough"          $ P.sendKey controlMask xK_h)
+    , ("C-S-j"                  , addName "Ctrl-j passthrough"          $ P.sendKey controlMask xK_j)
+    , ("C-S-k"                  , addName "Ctrl-k passthrough"          $ P.sendKey controlMask xK_k)
+    , ("C-S-l"                  , addName "Ctrl-l passthrough"          $ P.sendKey controlMask xK_l)
     ] ^++^
 
     -----------------------------------------------------------------------
@@ -1479,7 +1496,9 @@ myMouseBindings (XConfig {XMonad.modMask = myModMask}) = M.fromList $
 myStartupHook = do
 
     -- init-tilingwm sets up all major "desktop environment" like components
-    spawnOnce "$HOME/bin/wm/init-tilingwm"
+    -- spawnOnce "$HOME/bin/wm/init-tilingwm"
+    -- spawn "/home/ethan/bin/wm/init-tilingwm"
+    spawn "/home/ethan/bin/wm/init-wallpaper"
 
     -- init-tray kills and restarts stalone tray, hence just "spawn" so it
     -- runs on restart and will suffice to reposition tray on display changes
