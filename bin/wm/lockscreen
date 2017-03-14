@@ -40,7 +40,8 @@ main () {
 	lock_xscreensaver
 	#lock_xscreensaver_new
 	#lock_i3lock_old
-	xmonad_restart_if_display_change # mostly for xmobar/systray refresh
+	# xmonad_restart_if_display_change # mostly for xmobar/systray refresh
+	xmonad_restart_always
 	notifications start
 	housekeeping post
 }
@@ -49,7 +50,7 @@ notifications () {
 	# notifications start|stop
 	case ${1:-start} in
 		stop) killall -SIGUSR1 dunst & ;;
-		start) killall -SIGUSR2 dunst ;;
+		start) killall -SIGUSR2 dunst & ;;
 	esac
 }
 
@@ -136,6 +137,10 @@ cache_xrandr () {
 
 xmonad_restart_if_display_change () {
 	[ "$(cat $CACHE)" = "$(xrandr)" ] || xmonad --restart
+}
+
+xmonad_restart_always () {
+	xmonad --restart
 }
 
 main

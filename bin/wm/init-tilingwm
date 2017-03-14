@@ -78,7 +78,7 @@ xss-lock -- /home/ethan/bin/wm/lockscreen &
 
 # ----------------------------------------------------------------------
 # network manager applet
-nm-applet &
+#nm-applet &
 
 
 # ----------------------------------------------------------------------
@@ -89,7 +89,10 @@ start-pulseaudio-x11 &
 # ----------------------------------------------------------------------
 # notifications
 
-dunst -config ~/.dunstrc &
+# NOTE: disabled here since there is a dbus activated service that
+# gets started instead. Needed to also move my dunstrc to correct
+# location (.config/dunst/dunstrc)
+#dunst -config ~/.dunstrc &
 
 
 # ----------------------------------------------------------------------
@@ -101,7 +104,8 @@ unclutter --timeout 2 --fork
 # ----------------------------------------------------------------------
 # set wallpaper
 
-feh --bg-fill ~/tmp/lowpoly6.jpg &
+# doing this in xmonad so it happens at restart of the wm
+#feh --bg-fill ~/tmp/lowpoly6.jpg &
 
 
 # ----------------------------------------------------------------------
@@ -113,7 +117,8 @@ compton -b --config ~/.comptonrc --xrender-sync-fence & # test as per https://gi
 # ----------------------------------------------------------------------
 # launch GUI filemanager in daemon mode
 
-spacefm -d &
+# test against thunar
+#spacefm -d &
 
 
 # ----------------------------------------------------------------------
@@ -125,6 +130,7 @@ nvidia-settings --load-config-only &
 # configure keyboard
 
 # following systemctl start shouldn't be necessary
-systemctl --user restart xcape
+systemctl --user start xcape
+sleep 1
 $HOME/bin/wm/init-keyboard
 

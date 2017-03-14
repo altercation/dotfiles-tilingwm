@@ -4,6 +4,11 @@
 # reference
 # ----------------------------------------------------------------------
 
+# compose key in this setup is shift+ralt, release, then hit dead key and live key
+# e.g. shift+ralt, ', e = é
+
+# both shifts simultaneously switches between first and second group (en and gr)
+
 # /etc/udev/rules.d/00-keyboard.rules
 # ACTION=="add", SUBSYSTEM=="input", ENV{DISPLAY}=":0", ENV{XAUTHORITY}="/home/ethan/.Xauthority", RUN+="/home/ethan/bin/wm/init-keyboard"
 
